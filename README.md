@@ -1,7 +1,7 @@
-# NEAT_geometry_dash
+# NEAT_super_mario_bros
 
 Neuro-Evolution of Augmenting Topologies is a black-box optimization technique, that uses an evolutionary algorithm, in this case a genetic algorithm, for evolving artificial neural networks(ANNs).
-The goal here, it's to evolve an ANN for playing Geometry Dash.
+The goal here, it's to play the original super mario bros.
 
 Core features of NEAT : 
 * incremental growth: starting minimally and adding nodes and connections only when needed;
@@ -13,4 +13,4 @@ topological innovations are protected and have time to optimize their structure,
 ---
 
  ### Interaction with the game
-The api gd.py makes it all possible ! 
+The gym-super-mario-bros library makes it all possible ! 
