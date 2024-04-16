@@ -3,7 +3,7 @@ Author: gabriel jiglau
 StartingDate: 2024-III-26
 Description: All the concepts I will be using, but fragmented into smaller parts
 """
-import random
+import numpy as np
 
 # global variable used for keeping track of the gene ancestry
 innovation_number = 1
@@ -41,6 +41,10 @@ class Node:
         return f"Node(weight={self.weight}, innovation_number={self.innovation_number})"
 
 
+""" 
+the gene has the nodes and the connections 
+it's the graph-like data-structure that holds them together
+"""
 class Gene:
     def __init__(self, nodes=None, connections=None):
         if nodes is None:
@@ -72,9 +76,9 @@ class Gene:
             raise NodesNotConnectedException(first_node, second_node)
 
         # create new connections
-        is_enbled = True
-        first_connection = Connection(first_node, node_to_add, is_enbled)
-        second_connection = Connection(node_to_add, second_node, is_enbled)
+        is_enabled = True
+        first_connection = Connection(first_node, node_to_add, is_enabled)
+        second_connection = Connection(node_to_add, second_node, is_enabled)
 
         self.connections.append(first_connection)
         self.connections.append(second_connection)
@@ -98,7 +102,7 @@ class Gene:
 
         node_list = []
         for i in range(number_of_nodes):
-            random_weight = random.uniform(0, 1)
+            random_weight = np.random.uniform(0, 1)
             first_node = Node(random_weight)
             node_list.append(first_node)
 
@@ -109,15 +113,15 @@ class Gene:
             first_node = node_list[i]
             for j in range(number_of_nodes):
                 second_node = node_list[j]
-                random_connection_value = random.uniform(0, 1)
+                random_connection_value = np.random.uniform(0, 1)
                 if random_connection_value < under_one_threshold:
                     self.add_connection(first_node, second_node)
+
+        # return instance of the class to allow method chaining
+        return self
 
     def __str__(self):
         node_str = "\n  ".join(str(node) for node in self.nodes)
         connection_str = "\n  ".join(str(conn) for conn in self.connections)
 
         return f"Gene(\n  nodes=[\n  {node_str}\n  ],\n  connections=[\n  {connection_str}\n  ])"
-
-
-
