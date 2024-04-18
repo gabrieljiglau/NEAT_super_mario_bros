@@ -5,8 +5,6 @@ Description: All the concepts I will be using, but fragmented into smaller parts
 """
 import numpy as np
 
-# global variable used for keeping track of the gene ancestry
-innovation_number = 1
 
 class NodesNotConnectedException(Exception):
     def __init__(self, first_node, second_node):
@@ -15,38 +13,47 @@ class NodesNotConnectedException(Exception):
     def __str__(self):
         return self.message
 
+
+"""
+innovation_number :
+i)a historical archive that keeps track of all the connections and nodes that have  been created across all generations;
+ii)ensures consistency across different genomes, even if their topologies are different
+"""
+
+
 class Connection:
-    def __init__(self, in_node, out_node, is_enabled):
+    def __init__(self, in_node, out_node, is_enabled, innovation_number):
         self.in_node = in_node
         self.out_node = out_node
         self.is_enabled = is_enabled
+        self.innovation_number = innovation_number
 
     def __str__(self):
-        return f"Connection from Node {self.in_node} to Node {self.out_node} is enabled : {self.is_enabled}"
+        return f"Connection from Node {self.in_node} to Node {self.out_node} is enabled : {self.is_enabled}, " \
+               f"innovation_number: {self.innovation_number}"
 
 
 class Node:
     def __init__(self, weight):
-        global innovation_number
-
         # the weight should be set randomly at first
         self.weight = weight
-
-        # innovation_number gets incremented after each new node
-        self.innovation_number = innovation_number
-        innovation_number += 1
         self.connections = []
 
     def __str__(self):
-        return f"Node(weight={self.weight}, innovation_number={self.innovation_number})"
+        return f"Node(weight={self.weight})"
 
 
 """ 
 the gene has the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
+
+
 class Gene:
+
     def __init__(self, nodes=None, connections=None):
+        self.previous_innovation_numbers = []
+
         if nodes is None:
             self.nodes = []
         else:
@@ -69,16 +76,26 @@ class Gene:
                 return connection.is_enabled
         return False
 
-    # the relationship between the nodes is one-directional, to ensure that there won't be any cycles introduced
-    def add_node_between_genes(self, first_node: 'Node', second_node: 'Node', node_to_add: 'Node'):
+    def add_node_between_genes(self, first_node: 'Node', second_node: 'Node', node_to_add: 'Node',
+                               previous_innovation_numbers):
 
         if not self.are_nodes_connected(first_node, second_node):
             raise NodesNotConnectedException(first_node, second_node)
 
-        # create new connections
-        is_enabled = True
-        first_connection = Connection(first_node, node_to_add, is_enabled)
-        second_connection = Connection(node_to_add, second_node, is_enabled)
+        # Check if the connection already exists in previous_innovation_numbers
+        existing_innovation_number = self.find_matching_connection(first_node, second_node, previous_innovation_numbers)
+
+        if existing_innovation_number:
+            # Use the existing innovation_number
+            is_enabled = True
+            first_connection = Connection(first_node, node_to_add, is_enabled, existing_innovation_number)
+            second_connection = Connection(node_to_add, second_node, is_enabled, existing_innovation_number)
+        else:
+            # Assign a new innovation_number
+            is_enabled = True
+            new_innovation_number = self.get_new_innovation_number()
+            first_connection = Connection(first_node, node_to_add, is_enabled, new_innovation_number)
+            second_connection = Connection(node_to_add, second_node, is_enabled, new_innovation_number)
 
         self.connections.append(first_connection)
         self.connections.append(second_connection)
@@ -92,13 +109,42 @@ class Gene:
             if connection.in_node == second_node:
                 connection.in_node = node_to_add
 
+    @staticmethod
+    def find_matching_connection(in_node: 'Node', out_node: 'Node', previous_innovation_numbers):
+        for gene in previous_innovation_numbers:
+            for connection in gene.connections:
+                if connection.in_node == in_node and connection.out_node == out_node:
+                    return connection
+        return None
+
+    def get_new_innovation_number(self):
+        max_innovation = 0
+        for connection in self.connections:
+            max_innovation = max(max_innovation, connection.innovation_number)
+        return max_innovation + 1
+
+    """
+    checks whether or not the connection exists in the topology;
+    then adds the innovation_number accordingly(reuses it, or assigns a new value)
+    """
+
     def add_connection(self, first_node: 'Node', second_node: 'Node'):
-        # connections are one directional
-        is_enabled = True
-        connection = Connection(first_node, second_node, is_enabled)
+        existing_connection = self.find_matching_connection(first_node, second_node, self.previous_innovation_numbers)
+
+        if existing_connection:
+            connection = Connection(first_node, second_node, True, existing_connection.innovation_number)
+        else:
+            connection = Connection(first_node, second_node, True, self.get_new_innovation_number())
+
         self.connections.append(connection)
 
-    def initialize_gene_randomly(self, number_of_nodes, under_one_threshold):
+    """
+    Check if a connection between two nodes already exists in previous_genes.
+    i)if it does: reuse the existing connection's innovation number;
+    ii)else: create a new connection with a new innovation number;
+    """
+
+    def initialize_gene_randomly(self, number_of_nodes, under_one_threshold, previous_innovation_numbers):
 
         node_list = []
         for i in range(number_of_nodes):
@@ -114,8 +160,21 @@ class Gene:
             for j in range(number_of_nodes):
                 second_node = node_list[j]
                 random_connection_value = np.random.uniform(0, 1)
+
                 if random_connection_value < under_one_threshold:
-                    self.add_connection(first_node, second_node)
+                    # Check if the connection already exists in previous_genes
+                    existing_connection = self.find_matching_connection(first_node, second_node,
+                                                                        previous_innovation_numbers)
+
+                    if existing_connection:
+                        # Use the existing innovation_number
+                        connection = Connection(first_node, second_node, True, existing_connection.innovation_number)
+                    else:
+                        # Assign a new innovation_number
+                        connection = Connection(first_node, second_node, True, self.get_new_innovation_number())
+
+                    # Add the connection to the gene's connections list
+                    self.connections.append(connection)
 
         # return instance of the class to allow method chaining
         return self
