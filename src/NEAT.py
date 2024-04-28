@@ -4,7 +4,7 @@ StartingDate: 2024-IV-03
 Description: Actual implementation of the NEAT(neuro-evolution of augmenting topologies) algorithm for SuperMarioBros
 """
 
-# import the game
+import numpy as np
 import gym_super_mario_bros
 
 # import the Joypad wrapper
@@ -22,10 +22,7 @@ from gym.wrappers import FrameStack, GrayScaleObservation
 # import matplotlib
 # from matplotlib import pyplot as plt
 
-import numpy as np
-
-import random
-from BuildingBlocks import Gene, Node, Connection, NodesNotConnectedException
+from BuildingBlocks import Gene, Node, Connection
 
 # global variable used for the initial number of neurons a gene will have
 starting_number_of_nodes = 5
@@ -37,7 +34,7 @@ class NEAT:
     # oare ar trebui i) o variabila pentru mutatie de adaugat noduri
     #             si ii) o variabila pentur mutatie de adugat conexiuni ?
 
-    def __init__(self, pop_size=40, crossover_rate=0.8, mutation_rate=0.2):
+    def __init__(self, pop_size: int = 40, crossover_rate: float = 0.8, mutation_rate: float = 0.2):
         self.pop_size = pop_size
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
@@ -46,13 +43,13 @@ class NEAT:
         self.current_generation = []
 
     def randomly_initialize_population(self):
-
         for i in range(self.pop_size):
             initial_nodes = []
             initial_connections = []
 
             new_gene = Gene(initial_nodes, initial_connections)
-            self.current_generation.append(new_gene.initialize_gene_randomly(starting_number_of_nodes, threshold))
+            self.current_generation.append(
+                new_gene.initialize_gene_randomly(starting_number_of_nodes, threshold))
 
     """
         formulate initial population
@@ -61,7 +58,7 @@ class NEAT:
                 evaluate objective function
                 find fitness function
                 apply genetic operators
-                    reproduction
+                    selection
                     crossover
                     mutation
         until stopping criteria
@@ -72,6 +69,37 @@ class NEAT:
     def evaluate_population(self):
         pass
 
+    def mutate(self):
+        for node in self.current_generation[i].nodes:
+            for j in range(len(node.weights)):
+                generated_num = np.random.uniform(0, 1)
+                if generated_num < self.mutation_rate:
+                    # add a random number sampled from a normal distribution with
+                    # a mean of 0 and a standard deviation of 0.1
+                    node.weights[j] += np.random.normal(loc=0, scale=0.1)
+
+    def tournament_selection(self, population, tournament_size):
+        """
+        Tournament selection method.
+
+        :param population: List of individuals (genes) to select from.
+        :param tournament_size: Number of individuals to compete in each tournament.
+        :return: List of selected individuals.
+        """
+        selected = []
+
+        for _ in range(len(population)):
+            # Randomly select tournament_size individuals from the population
+            tournament_candidates = np.random.sample(population, tournament_size)
+
+            # Find the best individual (highest fitness) in the tournament
+            winner = max(tournament_candidates, key=lambda x: x.evaluate_individual)
+
+            # Add the winner to the selected list
+            selected.append(winner)
+
+        return selected
+
     def beat_mario(self):
         pass
 
@@ -80,12 +108,44 @@ class NEAT:
 
 
 if __name__ == '__main__':
-    pop_size = 20
-    crossover_rate = 0.8
+    p_size = 10
+    cx_rate = 0.8
     mutation_rate = 0.2
-    neat_instance = NEAT(pop_size, crossover_rate, mutation_rate)
+    neat_instance = NEAT(p_size, cx_rate, mutation_rate)
 
-    neat_instance.randomly_initialize_population()
+    # neat_instance.randomly_initialize_population()
+
+    print("separator")
+
+    # neat_instance.randomly_initialize_population()
+
+    node_1 = Node(1)
+    node_list = [node_1]
+    gene = Gene(node_list)
+
+    env = gym_super_mario_bros.make('SuperMarioBros-v0')
+    env = JoypadSpace(env, SIMPLE_MOVEMENT)
+
+    for i in range(5):
+        evaluation_score = gene.evaluate_individual(env, 1000)
+        print(evaluation_score)
+    #done = True
+
+    initial_position = 0
+    # for step in range(5000):
+    #     if done:
+    #         state = env.reset()
+    #     state, reward, done, info = env.step(env.action_space.sample())
+    #     print(f"x pos: {info['x_pos']} y pos: {info['y_pos']} time left: {info['time']} world :{info['world']}"
+    #           f" status: {info['status']} score: {info['score']}")
+    #
+    #     current_x_position = info['x_pos']
+    #     difference = current_x_position - initial_position
+    #     print(f"difference from the starting positions: " + str(difference))
+    #     # print(state.world)
+    #     env.render()
+    #
+    # env.close()
 
     print(neat_instance.__str__())
 

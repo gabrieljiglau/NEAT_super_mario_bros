@@ -6,7 +6,6 @@ Description: All the concepts I will be using, but fragmented into smaller parts
 
 import numpy as np
 
-
 class NodesNotConnectedException(Exception):
     def __init__(self, first_node, second_node):
         self.message = f"Nodes {first_node} and {second_node} are not connected."
@@ -17,8 +16,8 @@ class NodesNotConnectedException(Exception):
 
 class Connection:
     def __init__(self, in_node_id: int, out_node_id: int, is_enabled: bool, innovation_number: int):
-        self.in_node_id = in_node_id  # Index of the in_node in the gene's node list
-        self.out_node_id = out_node_id  # Index of the out_node in the gene's node list
+        self.in_node_id = in_node_id
+        self.out_node_id = out_node_id
         self.is_enabled = is_enabled
         self.innovation_number = innovation_number
 
@@ -28,7 +27,7 @@ class Connection:
 
 
 class Node:
-    _id_counter = 0  # Class-level counter for assigning unique IDs to nodes
+    _id_counter = 0  # class-level counter for assigning unique IDs to nodes
 
     def __init__(self, weight):
         self.id = Node._id_counter
@@ -42,7 +41,7 @@ class Node:
 
     @classmethod
     def reset_id_counter(cls):
-        cls._id_counter = 0  # Reset the node ID counter for each new gene
+        cls._id_counter = 0  # reset the node ID counter for each new gene
 
 
 """
@@ -63,12 +62,16 @@ class InnovationCounter:
 # global innovation counter
 global_innovation_counter = InnovationCounter()
 
+# global dictionary that keeps track of the innovation_numbers assigned to a connection between two nodes
+previous_innovation_numbers = {}
+
+
 """ 
 the gene has the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
 
-
+# TODO: add environment as a parameter in the constructor
 class Gene:
     _id_counter = 0  # class-level counter for assigning unique IDs to genes
 
@@ -103,16 +106,14 @@ class Gene:
                 return connection.is_enabled
         return False
 
-    def add_node_between_genes(self, first_node_id: int, second_node_id: int, node_to_add: 'Node',
-                               previous_innovation_numbers):
+    def add_node_between_genes(self, first_node_id: int, second_node_id: int, node_to_add: 'Node'):
 
         if not self.are_nodes_connected(first_node_id, second_node_id):
             raise NodesNotConnectedException(first_node_id, second_node_id)
 
-        innovation_number_first_connection = self.find_matching_connection(first_node_id, second_node_id,
-                                                                           previous_innovation_numbers)
-        innovation_number_second_connection = self.find_matching_connection(second_node_id, node_to_add.id,
-                                                                            previous_innovation_numbers)
+        innovation_number_first_connection = self.find_matching_connection(first_node_id, second_node_id)
+        innovation_number_second_connection = self.find_matching_connection(second_node_id, node_to_add.id)
+
         is_enabled = True
         need_innovation_first = True
         need_innovation_second = True
@@ -120,6 +121,7 @@ class Gene:
         first_connection = None
         second_connection = None
 
+        # in Python, any non-zero number is considered True, and zero is considered False.
         if innovation_number_first_connection:
             first_connection = Connection(first_node_id, node_to_add.id, is_enabled,
                                           innovation_number_first_connection.innovation_number)
@@ -144,6 +146,7 @@ class Gene:
         if second_connection is not None:
             self.connections.append(second_connection)
 
+        # add the new node to the nodes list
         self.nodes.append(node_to_add)
 
         # Update the existing connections
@@ -154,7 +157,7 @@ class Gene:
                 connection.in_node_id = node_to_add.id
 
     @staticmethod
-    def find_matching_connection(in_node_id: int, out_node_id: int, previous_innovation_numbers):
+    def find_matching_connection(in_node_id: int, out_node_id: int):
         innovation_key = (in_node_id, out_node_id)
         if innovation_key in previous_innovation_numbers:
             innovation_number = previous_innovation_numbers[innovation_key]
@@ -178,7 +181,8 @@ class Gene:
         connection = Connection(first_node_id, second_node_id, True, innovation_number)
         self.connections.append(connection)
 
-    def initialize_gene_randomly(self, number_of_nodes, under_one_threshold, previous_innovation_numbers):
+    def initialize_gene_randomly(self, number_of_nodes, under_one_threshold):
+        global previous_innovation_numbers, global_innovation_counter
 
         node_list = []
         for i in range(number_of_nodes):
@@ -198,14 +202,13 @@ class Gene:
                 is_enabled = True
 
                 if i != j and generated_threshold < under_one_threshold:
-                    existing_connection = self.find_matching_connection(first_node.id, second_node.id,
-                                                                        previous_innovation_numbers)
+                    existing_connection = self.find_matching_connection(first_node.id, second_node.id)
 
                     if existing_connection:
                         connection = Connection(first_node.id, second_node.id, is_enabled,
                                                 existing_connection.innovation_number)
                     else:
-                        new_innovation_number = self.get_new_innovation_number()
+                        new_innovation_number = global_innovation_counter.get_new_innovation_number()
                         connection = Connection(first_node.id, second_node.id, is_enabled,
                                                 new_innovation_number)
 
@@ -217,6 +220,59 @@ class Gene:
 
         # return instance of the class to allow method chaining
         return self
+
+    # the objective fitness function
+    def evaluate_individual(self, env, num_frames=50000):
+
+        cumulative_reward = 0
+        initial_x_position = 0
+        initial_time = 400
+        initial_score = 0
+        initial_coins = 0
+        done = True
+
+        for frame in range(num_frames):
+            if frame == 0 or done:
+                env.reset()
+
+            # here should be my actions that I take 'live'
+            state, reward, done, info = env.step(env.action_space.sample())
+            env.render()
+
+            current_x_position = info['x_pos']
+            velocity = current_x_position - initial_x_position
+
+            current_time = info['time']
+            clock_diff = initial_time - current_time
+
+            current_score = info['score']
+            score_diff = current_score - initial_score
+
+            current_coins = info['coins']
+            coins_diff = current_coins - initial_coins
+
+            is_alive = info['life'] > 0
+            death_penalty = -15 if not is_alive else 0
+
+            reward = velocity + clock_diff + death_penalty + score_diff + coins_diff
+
+            # Clip reward into range (-15, 15)
+            reward = max(min(reward, 15), -15)
+
+            # Update cumulative reward
+            cumulative_reward += reward
+
+            # update initial positions, time, score, and coins for the next iteration
+            initial_x_position = current_x_position
+            initial_time = current_time
+            initial_score = current_score
+            initial_coins = current_coins
+
+            # check if the individual died or reached a terminal state
+            if done:
+                break
+
+        return cumulative_reward
 
     def __str__(self):
         node_str = "\n  ".join(str(node) for node in self.nodes)
