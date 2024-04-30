@@ -6,6 +6,7 @@ Description: All the concepts I will be using, but fragmented into smaller parts
 
 import numpy as np
 
+
 class NodesNotConnectedException(Exception):
     def __init__(self, first_node, second_node):
         self.message = f"Nodes {first_node} and {second_node} are not connected."
@@ -50,6 +51,7 @@ i)a historical archive that keeps track of all the connections and nodes that ha
 ii)ensures consistency across different genomes, even if their topologies are different
 """
 
+
 class InnovationCounter:
     def __init__(self):
         self.current_innovation_number = 0
@@ -65,11 +67,11 @@ global_innovation_counter = InnovationCounter()
 # global dictionary that keeps track of the innovation_numbers assigned to a connection between two nodes
 previous_innovation_numbers = {}
 
-
 """ 
 the gene has the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
+
 
 # TODO: add environment as a parameter in the constructor
 class Gene:
@@ -111,6 +113,11 @@ class Gene:
         if not self.are_nodes_connected(first_node_id, second_node_id):
             raise NodesNotConnectedException(first_node_id, second_node_id)
 
+        # disable the original connection
+        for connection in self.connections:
+            if connection.out_node_id == second_node_id:
+                connection.is_enabled = False
+
         innovation_number_first_connection = self.find_matching_connection(first_node_id, second_node_id)
         innovation_number_second_connection = self.find_matching_connection(second_node_id, node_to_add.id)
 
@@ -149,13 +156,7 @@ class Gene:
         # add the new node to the nodes list
         self.nodes.append(node_to_add)
 
-        # Update the existing connections
-        for connection in self.connections:
-            if connection.out_node_id == second_node_id:
-                connection.out_node_id = node_to_add.id
-            if connection.in_node_id == second_node_id:
-                connection.in_node_id = node_to_add.id
-
+    # returns the innovation number of a connection if it exists, otherwise returns null
     @staticmethod
     def find_matching_connection(in_node_id: int, out_node_id: int):
         innovation_key = (in_node_id, out_node_id)
@@ -220,6 +221,14 @@ class Gene:
 
         # return instance of the class to allow method chaining
         return self
+
+    def mutate_gene(self, mutation_rate: float, standard_deviation: float = 0.03):
+        for node in self.nodes:
+            generated_num = np.random.uniform(0, 1)
+            if generated_num < mutation_rate:
+                # add a random number sampled from a normal distribution with
+                # a mean of 0 and a standard deviation of standard_deviation
+                node.weight += np.random.normal(loc=0, scale=standard_deviation)
 
     # the objective fitness function
     def evaluate_individual(self, env, num_frames=50000):

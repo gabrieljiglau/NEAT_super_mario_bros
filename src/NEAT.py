@@ -69,14 +69,10 @@ class NEAT:
     def evaluate_population(self):
         pass
 
-    def mutate(self):
-        for node in self.current_generation[i].nodes:
-            for j in range(len(node.weights)):
-                generated_num = np.random.uniform(0, 1)
-                if generated_num < self.mutation_rate:
-                    # add a random number sampled from a normal distribution with
-                    # a mean of 0 and a standard deviation of 0.1
-                    node.weights[j] += np.random.normal(loc=0, scale=0.1)
+    # smaller values ~0.01 for standard_deviation need to be tested
+    def mutate(self, standard_deviation: float = 0.03):
+        for individual in self.current_generation:
+            individual.mutate_gene(mutation_rate, standard_deviation)
 
     def tournament_selection(self, population, tournament_size):
         """
@@ -127,8 +123,10 @@ if __name__ == '__main__':
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
     for i in range(5):
-        evaluation_score = gene.evaluate_individual(env, 1000)
-        print(evaluation_score)
+        # evaluation_score = gene.evaluate_individual(env, 1000)
+        # print(evaluation_score)
+        random_value = np.random.normal(loc=0, scale=0.03)
+        print(random_value)
     #done = True
 
     initial_position = 0
