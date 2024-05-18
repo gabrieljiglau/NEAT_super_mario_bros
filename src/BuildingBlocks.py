@@ -26,6 +26,14 @@ class Connection:
         return f"Connection from Node {self.in_node_id} to Node {self.out_node_id} is enabled : {self.is_enabled}, " \
                f"innovation_number: {self.innovation_number}"
 
+    @property
+    def get_innovation_number(self):
+        return self.innovation_number
+
+    @property
+    def is_connection_enabled(self):
+        return self.is_enabled
+
 
 class Node:
     _id_counter = 0  # class-level counter for assigning unique IDs to nodes
@@ -77,7 +85,8 @@ it's the graph-like data-structure that holds them together
 class Gene:
     _id_counter = 0  # class-level counter for assigning unique IDs to genes
 
-    def __init__(self, nodes=None, connections=None):
+    def __init__(self, nodes=None, connections=None, fitness_score: int = 0):
+        self.fitness_score = fitness_score
         self.id = Gene._id_counter
         Gene._id_counter += 1  # Increment the counter for the next gene
 
@@ -94,6 +103,13 @@ class Gene:
             self.connections = []
         else:
             self.connections = connections
+
+    @property
+    def get_fitness_score(self):
+        return self.fitness_score
+
+    def set_fitness_score(self, fitness_score):
+        self.fitness_score = fitness_score
 
     def are_nodes_connected(self, first_node_id: int, second_node_id: int) -> bool:
         for connection in self.connections:
@@ -169,7 +185,7 @@ class Gene:
     def get_new_innovation_number():
         return global_innovation_counter.get_new_innovation_number()
 
-    def add_connection(self, first_node_id: int, second_node_id: int):
+    def add_connection_between_nodes(self, first_node_id: int, second_node_id: int):
         innovation_key = (first_node_id, second_node_id)
 
         if innovation_key in self.previous_innovation_numbers:
@@ -194,6 +210,9 @@ class Gene:
         # Add nodes to the gene's node list
         self.nodes = node_list
 
+        # old double for loop that didn't add mark the connections under that threshold as having 'is_enabled' = false
+        # and didn't add the 'dormant' connection in the list of connections, but worked
+        '''
         for i in range(number_of_nodes):
             first_node = node_list[i]
             for j in range(i + 1, number_of_nodes):
@@ -201,7 +220,8 @@ class Gene:
 
                 generated_threshold = np.random.uniform(0, 1)
                 is_enabled = True
-
+                
+                # want to add a connection if only the generated value is under a given threshold
                 if i != j and generated_threshold < under_one_threshold:
                     existing_connection = self.find_matching_connection(first_node.id, second_node.id)
 
@@ -218,18 +238,90 @@ class Gene:
                         previous_innovation_numbers[innovation_key] = connection.innovation_number
 
                     self.connections.append(connection)
+        '''
+        # updated version, but untested
+        for i in range(number_of_nodes):
+            first_node = node_list[i]
+            for j in range(i + 1, number_of_nodes):
+                second_node = node_list[j]
+
+                # Generate a random value
+                generated_threshold = np.random.uniform(0, 1)
+
+                # Check if the generated value is under the threshold
+                if generated_threshold < under_one_threshold:
+                    is_enabled = True  # Enable the connection
+                else:
+                    is_enabled = False  # Disable the connection
+
+                # Check if the nodes are the same
+                if i == j:
+                    continue  # Skip the rest of the loop iteration if the nodes are the same
+
+                # Find or create a connection
+                existing_connection = self.find_matching_connection(first_node.id, second_node.id)
+
+                # what happens on this line when the connection was added since the first to the second node
+                if existing_connection:
+                    connection = Connection(first_node.id, second_node.id, is_enabled,
+                                            existing_connection.innovation_number)
+                else:
+                    new_innovation_number = global_innovation_counter.get_new_innovation_number()
+                    connection = Connection(first_node.id, second_node.id, is_enabled, new_innovation_number)
+
+                    # Update previous_innovation_numbers with the new connection
+                    innovation_key = (connection.in_node_id, connection.out_node_id)
+                    previous_innovation_numbers[innovation_key] = connection.innovation_number
+
+                # Add the connection to the list
+                self.connections.append(connection)
 
         # return instance of the class to allow method chaining
         return self
 
-    def mutate_gene(self, mutation_rate: float, standard_deviation: float = 0.03):
+    def mutate_weights_gene(self, mutation_rate_weights: float, standard_deviation: float = 0.03):
         for node in self.nodes:
             generated_num = np.random.uniform(0, 1)
-            if generated_num < mutation_rate:
+            if generated_num < mutation_rate_weights:
                 # add a random number sampled from a normal distribution with
                 # a mean of 0 and a standard deviation of standard_deviation
                 node.weight += np.random.normal(loc=0, scale=standard_deviation)
 
+    def mutate_nodes_gene(self, mutation_rate_nodes: float):
+        for connection in self.connections:
+            generated_num = np.random.uniform(0, 1)
+
+            if generated_num < mutation_rate_nodes:
+                first_node_id = connection.in_node_id
+                second_node_id = connection.out_node_id
+
+                generated_weight = np.random.uniform(0, 1)
+                new_node = Node(generated_weight)
+
+                self.add_node_between_genes(first_node_id, second_node_id, new_node)
+
+    def mutate_connections_gene(self, mutation_rate_connections: float):
+        for i, node1 in enumerate(self.nodes):
+            for j, node2 in enumerate(self.nodes):
+                if i != j and not self.are_nodes_connected(node1.id, node2.id):
+                    generated_num = np.random.uniform(0, 1)
+                    if generated_num < mutation_rate_connections:
+                        # Add a connection between node1 and node2
+                        self.add_connection_between_nodes(node1.id, node2.id)
+
+    def mutate_connections_disable_connection(self, mutation_rate_disable_connection: float):
+        for connection in self.connections:
+            generated_num = np.random.uniform(0, 1)
+            if generated_num < mutation_rate_disable_connection is True:
+                connection.is_enabled = False
+
+    def mutate_connections_enable_connection(self, mutation_rate_enable_connection: float):
+        for connection in self.connections:
+            generated_num = np.random.uniform(0, 1)
+            if generated_num < mutation_rate_enable_connection and connection.is_enabled is False:
+                connection.is_enabled = True
+
+    # TODO : interaction with the game
     # the objective fitness function
     def evaluate_individual(self, env, num_frames=50000):
 

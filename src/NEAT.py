@@ -31,19 +31,22 @@ threshold = 0.23
 
 class NEAT:
 
-    # oare ar trebui i) o variabila pentru mutatie de adaugat noduri
-    #             si ii) o variabila pentur mutatie de adugat conexiuni ?
-
-    def __init__(self, pop_size: int = 40, crossover_rate: float = 0.8, mutation_rate: float = 0.2):
+    def __init__(self, pop_size: int = 40, crossover_rate: float = 0.8, mutation_rate_weights: float = 0.04,
+                 mutation_rate_connections: float = 0.02, mutation_rate_enable_connections: float = 0.02,
+                 mutation_rate_disable_connections: float = 0.01, mutation_rate_nodes: float = 0.03):
         self.pop_size = pop_size
         self.crossover_rate = crossover_rate
-        self.mutation_rate = mutation_rate
+        self.mutation_rate_weights = mutation_rate_weights
         self.number_of_elites = pop_size * 0.085
+        self.mutation_rate_connections = mutation_rate_connections
+        self.mutation_rate_enable_connections = mutation_rate_enable_connections
+        self.mutation_rate_disable_connections = mutation_rate_disable_connections
+        self.mutation_rate_nodes = mutation_rate_nodes
 
         self.current_generation = []
 
     def randomly_initialize_population(self):
-        for i in range(self.pop_size):
+        for _ in range(self.pop_size):
             initial_nodes = []
             initial_connections = []
 
@@ -70,50 +73,122 @@ class NEAT:
         pass
 
     # smaller values ~0.01 for standard_deviation need to be tested
-    def mutate(self, standard_deviation: float = 0.03):
+    def mutate_weights(self, standard_deviation: float = 0.03):
         for individual in self.current_generation:
-            individual.mutate_gene(mutation_rate, standard_deviation)
+            individual.mutate_weights_gene(self.mutation_rate_weights, standard_deviation)
 
-    def tournament_selection(self, population, tournament_size):
-        """
-        Tournament selection method.
+    def mutate_enabled_connections(self):
+        for individual in self.current_generation:
+            individual.mutate_connections_enable_connection(self.mutation_rate_enable_connections)
 
-        :param population: List of individuals (genes) to select from.
-        :param tournament_size: Number of individuals to compete in each tournament.
-        :return: List of selected individuals.
-        """
-        selected = []
+    def mutate_disabled_connections(self):
+        for individual in self.current_generation:
+            individual.mutate_connections_disbale_connection(self.mutation_rate_disable_connections)
 
-        for _ in range(len(population)):
-            # Randomly select tournament_size individuals from the population
-            tournament_candidates = np.random.sample(population, tournament_size)
+    def mutate_nodes(self):
+        for individual in self.current_generation:
+            individual.mutate_nodes_gene(self.mutation_rate_nodes)
 
-            # Find the best individual (highest fitness) in the tournament
-            winner = max(tournament_candidates, key=lambda x: x.evaluate_individual)
+    def mutate_connections(self):
+        for individual in self.current_generation:
+            individual.mutate_connections_gene(self.mutation_rate_connections)
 
-            # Add the winner to the selected list
-            selected.append(winner)
+    # TODO: este aceasta varianta corecta? care este diferenta dintre ce este aici si wikipedia?
+    def rank_based_selection(self):
+        selected_parents = []
 
-        return selected
+        sorted_population = sorted(self.current_generation, key=lambda individual: individual.get_fitness_score())
+
+        population_size = len(sorted_population)
+        rank_map = {individual: rank + 1 for rank, individual in enumerate(sorted_population)}
+
+        # Calculate selection probabilities
+        selection_probabilities = []
+        for individual in sorted_population:
+            rank = rank_map[individual]
+            probability = 2.0 * (population_size - rank + 1) / (population_size * (population_size + 1))
+            selection_probabilities.append(probability)
+
+        # Selection
+        for _ in range(2):  # Select two individuals
+            random_value = np.random.uniform(0,1)
+            cumulative_probability = 0
+            selected_individual_index = 0
+
+            for index, probability in enumerate(selection_probabilities):
+                cumulative_probability += probability
+                if cumulative_probability >= random_value:
+                    selected_individual_index = index
+                    break
+
+            selected_parents.append(sorted_population[selected_individual_index])
+
+        return tuple(selected_parents)
+
+    '''
+    the crossover method takes in 2 compatible genes and produces one offspring 
+    '''
+    def crossover(self, parent1: Gene, parent2: Gene):
+
+        new_gene = None
+
+        # return at random one of the parents
+        if np.random.uniform(0, 1) > self.crossover_rate:
+            if np.random.uniform(0, 1) > 0.5:
+                return parent1
+            else:
+                return parent2
+
+        max_innovation_number_first = parent1.previous_innovation_numbers.__len__()
+        max_innovation_number_second = parent2.previous_innovation_numbers.__len__()
+
+        bigger_innovation_numbers = {}
+        smaller_innovation_numbers = {}
+        if max_innovation_number_first > max_innovation_number_second:
+            bigger_innovation_numbers = max_innovation_number_first
+            smaller_innovation_numbers = max_innovation_number_second
+        else:
+            bigger_innovation_numbers = max_innovation_number_second
+            smaller_innovation_numbers = max_innovation_number_first
+
+        # iterate through the genes using 2 pointers,
+        # checking which genes are 'disjoint' and which are 'excess',
+        # add them to the new gene
+
+
+        connections1 = parent1.connections
+        connections2 = parent2.connections
+        # for i in range(bigger_innovation_numbers.__len__()):
+            # mai intai sa verific si daca celalalt are numarul de inovatie
+            # apoi sa 'decid' pe baza fitness-ului pe a carui gena o aleg
+
+            # if connections1[i].get_innovation_number.is_connection_enabled
+
+
+        return new_gene
 
     def beat_mario(self):
         pass
 
     def __str__(self):
-        return '\n'.join([f"Gene {i}: {gene}" for i, gene in enumerate(self.current_generation)])
+        return '\n'.join([f"Gene {index}: {individual}" for index, individual in enumerate(self.current_generation)])
 
 
 if __name__ == '__main__':
     p_size = 10
     cx_rate = 0.8
-    mutation_rate = 0.2
-    neat_instance = NEAT(p_size, cx_rate, mutation_rate)
+    m_rate_weights = 0.2
+    m_rate_connections = 0.02
+    m_rate_nodes = 0.03
+    neat_instance = NEAT(p_size, cx_rate, m_rate_weights, m_rate_connections, m_rate_nodes)
 
     # neat_instance.randomly_initialize_population()
 
     print("separator")
 
     # neat_instance.randomly_initialize_population()
+
+    # TODO : test the mutate_nodes and mutate_connections
 
     node_1 = Node(1)
     node_list = [node_1]
@@ -125,9 +200,11 @@ if __name__ == '__main__':
     for i in range(5):
         # evaluation_score = gene.evaluate_individual(env, 1000)
         # print(evaluation_score)
-        random_value = np.random.normal(loc=0, scale=0.03)
-        print(random_value)
-    #done = True
+        # random_value = np.random.normal(loc=0, scale=0.03)
+        zero_to_one = np.random.uniform(0, 1)
+        # print(random_value)
+        print(zero_to_one)
+    # done = True
 
     initial_position = 0
     # for step in range(5000):
