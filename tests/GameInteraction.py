@@ -1,7 +1,7 @@
 import numpy as np
 import gym_super_mario_bros
 
-# import the Joypad wrapper
+# import the Joy pad wrapper
 from nes_py.wrappers import JoypadSpace
 
 # import the simplified controls
