@@ -1,74 +1,10 @@
 """
 Author: gabriel jiglau
 StartingDate: 2024-III-26
-Description: The concepts regarding neural networks
 """
 
 import numpy as np
-
-
-class NodesNotConnectedException(Exception):
-    def __init__(self, first_node, second_node):
-        self.message = f"Nodes {first_node} and {second_node} are not connected."
-
-    def __str__(self):
-        return self.message
-
-
-class Connection:
-    def __init__(self, in_node_id: int, out_node_id: int, weight: float, is_enabled: bool, innovation_number: int):
-        self.in_node_id = in_node_id
-        self.out_node_id = out_node_id
-        self.weight = weight
-        self.is_enabled = is_enabled
-        self.innovation_number = innovation_number
-
-    def __str__(self):
-        return (f"Connection(in_node_id={self.in_node_id}, out_node_id={self.out_node_id}, "
-                f"weight={self.weight}, is_enabled={self.is_enabled}, "
-                f"innovation_number={self.innovation_number})")
-
-    @property
-    def get_innovation_number(self):
-        return self.innovation_number
-
-    @property
-    def is_connection_enabled(self):
-        return self.is_enabled
-
-# nodes no longer hold the weights
-class Node:
-    _id_counter = 0  # class-level counter for assigning unique IDs to nodes
-
-    def __init__(self):
-        self.id = Node._id_counter
-        Node._id_counter += 1
-        self.connections = []
-
-    def __str__(self):
-        connections_str = ', '.join([str(conn) for conn in self.connections])
-        return f"Node(id={self.id}, connections=[{connections_str}])"
-
-    @classmethod
-    def reset_id_counter(cls):
-        cls._id_counter = 0  # reset the node ID counter for each new gene
-
-
-"""
-innovation_number :
-i)a historical archive that keeps track of all the connections and nodes that have  been created across all generations;
-ii)ensures consistency across different genomes, even if their topologies are different
-"""
-
-
-class InnovationCounter:
-    def __init__(self):
-        self.current_innovation_number = 0
-
-    def get_new_innovation_number(self):
-        self.current_innovation_number += 1
-        return self.current_innovation_number
-
+from BuildingBlocks import Connection, Node, NodesNotConnectedException, InnovationCounter
 
 # global innovation counter
 global_innovation_counter = InnovationCounter()
@@ -77,15 +13,16 @@ global_innovation_counter = InnovationCounter()
 previous_innovation_numbers = {}
 
 """ 
-the gene has the nodes and the connections 
+the gene of the genetic algorithm IS a neural network;
+it contains the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
 
-
+# the gene has now a bias node attributed to it, that is connected only to the first hidden layer
+# needs to be tested, as this suggestion was made by gepeto, without my supervision
+# no tests were performed, either
 # TODO: add environment as a parameter in the constructor
 class Gene:
-    _id_counter = 0  # class-level counter for assigning unique IDs to genes
-
     def __init__(self, nodes=None, connections=None, fitness_score: int = 0):
         self.fitness_score = fitness_score
         self.id = Gene._id_counter
@@ -94,7 +31,7 @@ class Gene:
         self.previous_innovation_numbers = {}
 
         # Reset the node ID counter for each new gene
-        Node.reset_id_counter()
+        Node._id_counter = 0
 
         if nodes is None:
             self.nodes = []
@@ -104,6 +41,21 @@ class Gene:
             self.connections = []
         else:
             self.connections = connections
+
+        # Add a bias node
+        self.bias_node = Node()
+        self.bias_node.output_value = 1.0  # Bias node always outputs 1
+        self.nodes.append(self.bias_node)
+
+    # tot gepeto si aici
+    def add_connection(self, in_node_id: int, out_node_id: int, weight: float, is_enabled: bool,
+                       innovation_number: int):
+        connection = Connection(in_node_id, out_node_id, weight, is_enabled, innovation_number)
+        self.connections.append(connection)
+        for node in self.nodes:
+            if node.id == in_node_id:
+                node.add_connection(connection)
+                break
 
     @property
     def get_fitness_score(self):
