@@ -1,6 +1,7 @@
 """
 Description: the concepts/building blocks that help build and manage the neural networks
 """
+
 class Connection:
     def __init__(self, in_node_id: int, out_node_id: int, weight: float, is_enabled: bool, innovation_number: int):
         self.in_node_id = in_node_id
@@ -22,6 +23,7 @@ class Connection:
     def is_connection_enabled(self):
         return self.is_enabled
 
+
 class NodesNotConnectedException(Exception):
     def __init__(self, first_node, second_node):
         self.message = f"Nodes {first_node} and {second_node} are not connected."
@@ -29,21 +31,23 @@ class NodesNotConnectedException(Exception):
     def __str__(self):
         return self.message
 
-# nodes no longer hold the weights
+
 class Node:
     _id_counter = 0
 
-    def __init__(self):
+    def __init__(self, bias: float = 0, input_value: float = 0, output_value: float = 0):
         self.id = Node._id_counter
         Node._id_counter += 1
         self.connections = []
-        self.input_value = 0.0
-        self.output_value = 0.0
+        self._bias = bias
+        self._input_value = input_value
+        self._output_value = output_value
 
     def __str__(self):
         connections_str = ', '.join([str(conn) for conn in self.connections])
         return f"Node(id={self.id}, connections=[{connections_str}])"
 
+    # functia asta pare suspecta
     @classmethod
     def _get_next_id(cls):
         result = cls._id_counter
@@ -54,11 +58,32 @@ class Node:
     def reset_id_counter(cls):
         cls._id_counter = 0
 
-    def add_connection(self, connection):
-        self.connections.append(connection)
+    @property
+    def bias(self):
+        return self._bias
+
+    @bias.setter
+    def bias(self, new_bias: int = 0):
+        self._bias = new_bias
+
+    @property
+    def input_value(self):
+        return self._input_value
+
+    @input_value.setter
+    def input_value(self, input_value: float = 0):
+        self._input_value = input_value
+
+    @property
+    def output_value(self):
+        return self._output_value
+
+    @output_value.setter
+    def output_value(self, output_value: float = 0):
+        self._output_value = output_value
 
     def activate(self):
-        self.output_value = max(0.0, self.input_value)  # ReLU's activation function
+        self._output_value = max(0.0, self._input_value)  # ReLU's activation function
 
 
 """

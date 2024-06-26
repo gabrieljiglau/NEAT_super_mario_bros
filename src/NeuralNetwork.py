@@ -1,6 +1,7 @@
 """
 Author: gabriel jiglau
 StartingDate: 2024-III-26
+Description: The concepts regarding neural networks
 """
 
 import numpy as np
@@ -13,25 +14,24 @@ global_innovation_counter = InnovationCounter()
 previous_innovation_numbers = {}
 
 """ 
-the gene of the genetic algorithm IS a neural network;
-it contains the nodes and the connections 
+the gene has the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
 
-# the gene has now a bias node attributed to it, that is connected only to the first hidden layer
-# needs to be tested, as this suggestion was made by gepeto, without my supervision
-# no tests were performed, either
+
 # TODO: add environment as a parameter in the constructor
 class Gene:
+    _id_counter = 0  # class-level counter for assigning unique IDs to genes
+
     def __init__(self, nodes=None, connections=None, fitness_score: int = 0):
-        self.fitness_score = fitness_score
+        self._fitness_score = fitness_score
         self.id = Gene._id_counter
         Gene._id_counter += 1  # Increment the counter for the next gene
 
         self.previous_innovation_numbers = {}
 
         # Reset the node ID counter for each new gene
-        Node._id_counter = 0
+        Node.reset_id_counter()
 
         if nodes is None:
             self.nodes = []
@@ -42,27 +42,13 @@ class Gene:
         else:
             self.connections = connections
 
-        # Add a bias node
-        self.bias_node = Node()
-        self.bias_node.output_value = 1.0  # Bias node always outputs 1
-        self.nodes.append(self.bias_node)
-
-    # tot gepeto si aici
-    def add_connection(self, in_node_id: int, out_node_id: int, weight: float, is_enabled: bool,
-                       innovation_number: int):
-        connection = Connection(in_node_id, out_node_id, weight, is_enabled, innovation_number)
-        self.connections.append(connection)
-        for node in self.nodes:
-            if node.id == in_node_id:
-                node.add_connection(connection)
-                break
-
     @property
-    def get_fitness_score(self):
-        return self.fitness_score
+    def fitness_score(self):
+        return self._fitness_score
 
-    def set_fitness_score(self, fitness_score):
-        self.fitness_score = fitness_score
+    @fitness_score.setter
+    def fitness_score(self, fitness_score: float):
+        self._fitness_score = fitness_score
 
     def are_nodes_connected(self, first_node_id: int, second_node_id: int) -> bool:
         for connection in self.connections:
