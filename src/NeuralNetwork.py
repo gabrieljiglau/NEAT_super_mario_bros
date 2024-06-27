@@ -23,7 +23,7 @@ it's the graph-like data-structure that holds them together
 class Gene:
     _id_counter = 0  # class-level counter for assigning unique IDs to genes
 
-    def __init__(self, nodes=None, connections=None, fitness_score: int = 0):
+    def __init__(self, nodes=None, connections=None, fitness_score: float = 0):
         self._fitness_score = fitness_score
         self.id = Gene._id_counter
         Gene._id_counter += 1  # Increment the counter for the next gene
@@ -42,8 +42,52 @@ class Gene:
         else:
             self.connections = connections
 
+    # to-be-tested method that processes a given input
+    def process_input(self, input_value: float) -> float:
+
+        for node in self.nodes:
+            # call to helper function
+            pass
+
+        return -1
+
+    # the idea is to pass the input_value to a specific node and 'do the math';
+    # then, propagate the result into the nodes that are connected to the 'current node'/the one passed as a parameter
+    def _process_input_node(self, node: Node, input_value: float):
+        if node.is_input_neuron or node.is_output_neuron:
+            node.output_value = input_value
+        else:
+            sum_input = 0.0
+            for connection in self.connections:
+                connected_node = get_node_from_connection(connection)
+                sum_input += connected_node.output_value * connection.weight
+
+            sum_input += self.bias
+            self.output_value = self._activate(sum_input)
+
+            # Set the input_value of connected nodes to self.output_value
+        for connection in self.connections:
+            connected_node = connection.get_connected_node(self.id)
+            connected_node.input_value = self.output_value
+
+        return self.output_value
+
+    def get_node_from_connection(self, input_connection: Connection):
+        connection_list = self.connections
+
+        node = None
+        pass
+
     @property
-    def fitness_score(self):
+    def get_nodes(self):
+        return self.nodes
+
+    @property
+    def get_connections(self):
+        return self.connections
+
+    @property
+    def fitness_score(self) -> float:
         return self._fitness_score
 
     @fitness_score.setter
