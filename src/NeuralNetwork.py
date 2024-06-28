@@ -3,9 +3,10 @@ Author: gabriel jiglau
 StartingDate: 2024-III-26
 Description: The concepts regarding neural networks
 """
+from typing import List
 
 import numpy as np
-from BuildingBlocks import Connection, Node, NodesNotConnectedException, InnovationCounter
+from src.BuildingBlocks import Connection, Node, NodesNotConnectedException, InnovationCounter
 
 # global innovation counter
 global_innovation_counter = InnovationCounter()
@@ -23,7 +24,8 @@ it's the graph-like data-structure that holds them together
 class Gene:
     _id_counter = 0  # class-level counter for assigning unique IDs to genes
 
-    def __init__(self, nodes=None, connections=None, fitness_score: float = 0):
+    # None este lasat aici doar pentru a testa simularea inputului din 'EvaluateNeuralNetwork.py'
+    def __init__(self, nodes: List[Node], connections: List[Connection] = None, fitness_score: float = 0):
         self._fitness_score = fitness_score
         self.id = Gene._id_counter
         Gene._id_counter += 1  # Increment the counter for the next gene
@@ -44,39 +46,17 @@ class Gene:
 
     # to-be-tested method that processes a given input
     def process_input(self, input_value: float) -> float:
+        output = 0
 
         for node in self.nodes:
-            # call to helper function
-            pass
+            # call process_input_node in the Node class
+            if node.is_input_neuron:
+                # !! trebuie trecut ca parametru output doar daca nu este in stratul de input
+                output += node.process_input_node(input_value)
+            else:
+                output += node.process_input_node(output)
 
-        return -1
-
-    # the idea is to pass the input_value to a specific node and 'do the math';
-    # then, propagate the result into the nodes that are connected to the 'current node'/the one passed as a parameter
-    def _process_input_node(self, node: Node, input_value: float):
-        if node.is_input_neuron or node.is_output_neuron:
-            node.output_value = input_value
-        else:
-            sum_input = 0.0
-            for connection in self.connections:
-                connected_node = get_node_from_connection(connection)
-                sum_input += connected_node.output_value * connection.weight
-
-            sum_input += self.bias
-            self.output_value = self._activate(sum_input)
-
-            # Set the input_value of connected nodes to self.output_value
-        for connection in self.connections:
-            connected_node = connection.get_connected_node(self.id)
-            connected_node.input_value = self.output_value
-
-        return self.output_value
-
-    def get_node_from_connection(self, input_connection: Connection):
-        connection_list = self.connections
-
-        node = None
-        pass
+        return output
 
     @property
     def get_nodes(self):
@@ -152,12 +132,17 @@ class Gene:
         self.nodes.append(node_to_add)
 
     # returns the innovation number of a connection if it exists, otherwise returns null
-    @staticmethod
-    def find_matching_connection(in_node_id: int, out_node_id: int):
+    # I have to get the connection weight and pass it as a parameter to the constructor, when returning it
+
+    def find_matching_connection(self, in_node_id: int, out_node_id: int):
         innovation_key = (in_node_id, out_node_id)
         if innovation_key in previous_innovation_numbers:
             innovation_number = previous_innovation_numbers[innovation_key]
-            return Connection(in_node_id, out_node_id, True, innovation_number)
+            # return Connection(in_node_id, out_node_id, True, innovation_number)
+            for connection in self.connections:
+                if connection.innovation_number == innovation_number:
+                    return connection
+
         return None
 
     @staticmethod
@@ -221,6 +206,8 @@ class Gene:
             if generated_num < mutation_rate_weights:
                 connection.weight += np.random.normal(loc=0, scale=standard_deviation)
 
+    # TODO: change the method, since now the node also has a field for 'neighbours',
+    #  the list of nodes he is connected to
     def mutate_nodes_gene(self, mutation_rate_nodes: float):
         for connection in self.connections:
             generated_num = np.random.uniform(0, 1)
@@ -229,9 +216,10 @@ class Gene:
                 first_node_id = connection.in_node_id
                 second_node_id = connection.out_node_id
 
-                generated_weight = np.random.uniform(-1, 1)
                 new_node = Node()
-
+                # aici, noul nod, trebuie sa aibe ca vecin nodul numarul 2,
+                # iar primul nod sa aibe ca vecin noul nod
+                # TODO: inca nu m-am uitat in functie sa vad exact ce se intampla acolo
                 self.add_node_between_genes(first_node_id, second_node_id, new_node)
 
     def mutate_connections_gene(self, mutation_rate_connections: float):
