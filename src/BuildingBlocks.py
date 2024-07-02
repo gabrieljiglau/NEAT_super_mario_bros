@@ -2,28 +2,61 @@
 Description: the concepts/building blocks that help build and manage the neural networks/genes
 """
 from typing import List
+from collections import deque
 
 
 class Connection:
     def __init__(self, in_node_id: int, out_node_id: int, weight: float, is_enabled: bool, innovation_number: int):
-        self.in_node_id = in_node_id
-        self.out_node_id = out_node_id
-        self.weight = weight
-        self.is_enabled = is_enabled
-        self.innovation_number = innovation_number
+        self._in_node_id = in_node_id
+        self._out_node_id = out_node_id
+        self._weight = weight
+        self._is_enabled = is_enabled
+        self._innovation_number = innovation_number
 
     def __str__(self):
-        return (f"Connection(in_node_id={self.in_node_id}, out_node_id={self.out_node_id}, "
-                f"weight={self.weight}, is_enabled={self.is_enabled}, "
-                f"innovation_number={self.innovation_number})")
+        return (f"Connection(in_node_id={self._in_node_id}, out_node_id={self._out_node_id}, "
+                f"weight={self._weight}, is_enabled={self._is_enabled}, "
+                f"innovation_number={self._innovation_number})")
 
     @property
-    def get_innovation_number(self):
-        return self.innovation_number
+    def out_node_id(self) -> int:
+        return self._out_node_id
+
+    @out_node_id.setter
+    def out_node_id(self, out_node_id: int) -> None:
+        self._out_node_id = out_node_id
 
     @property
-    def is_connection_enabled(self):
-        return self.is_enabled
+    def in_node_id(self) -> int:
+        return self._innovation_number
+
+    @in_node_id.setter
+    def in_node_id(self, in_node_id: int) -> None:
+        self._in_node_id = in_node_id
+
+    @property
+    def innovation_number(self) -> int:
+        return self._innovation_number
+
+    @innovation_number.setter
+    def innovation_number(self, new_innovation_number: int) -> None:
+        self._innovation_number = new_innovation_number
+
+    @property
+    def is_enabled(self) -> bool:
+        return self._is_enabled
+
+    @is_enabled.setter
+    def is_enabled(self, new_boolean: bool):
+        self._is_enabled = new_boolean
+
+    @property
+    def weight(self) -> float:
+        return self._weight
+
+    @weight.setter
+    def weight(self, new_weight: float = 0):
+        self._weight = new_weight
 
 
 class NodesNotConnectedException(Exception):
@@ -38,9 +71,11 @@ class NodesNotConnectedException(Exception):
 class Node:
     _id_counter = 0
 
-    def __init__(self, neighbours: List['Node'] = None, bias: float = 0, input_value: float = 0,
+    def __init__(self, neighbours=None, bias: float = 0, input_value: float = 0,
                  output_value: float = 0,
                  is_input_neuron: bool = False, is_output_neuron: bool = False):
+        if neighbours is None:
+            neighbours = []
         self.id = Node._id_counter
         Node._id_counter += 1
 
@@ -51,44 +86,69 @@ class Node:
         self._output_value = output_value
         self._is_input_neuron = is_input_neuron
         self._is_output_neuron = is_output_neuron
+        self._is_visited = False
 
     def __str__(self):
         connections_str = ', '.join([str(conn) for conn in self.connections])
         return f"Node(id={self.id}, connections=[{connections_str}])"
 
-    # the idea is to pass the input_value to a specific node and 'do the math';
-    # then, propagate the result into the nodes that are connected to the 'current node'/the one passed as a parameter
+    """
+     the idea is to pass the input_value to a specific node and 'do the math':
+     i) sum the weighted inputs from all incoming connections
+     ii) add the bias to this sum
+     iii) apply the activation function
+    
+    then, propagate the result into the nodes that are connected to the 'current node'/the one passed as a parameter
+    """
 
-    # funtia nu este corecta?? de CE ?
-    def process_input_node(self, input_value: float) -> float:
+    # not correct, since all the layers except the input layers, have a different input_value,
+    # that is calculated 'dynamically'; it depends on the previous layer process
+    def propagate_input(self, input_value: float) -> None:
+        queue = deque()
+        queue.append(self)
 
-        sum_input = 0.0
-        if self.is_input_neuron:
-            # pass the input unchanged to the hidden layer
-            return input_value
-        elif self.is_output_neuron:
-            self.output_value = self.activate(sum_input)
-            return self.output_value
+        while len(queue) > 0:
+            current_node = queue.popleft()
+            current_node.isVisited = True
+
+            self._process_input_node(input_value)
+
+            for neighbour in self.neighbours:
+                if not neighbour.is_visited:
+                    queue.append(neighbour)
+                    neighbour.is_visited = True
+
+    def _process_input_node(self, input_value: float) -> None:
+        if not self.is_input_neuron or self.is_input_neuron:
+            self.output_value = self.activate(self.input_value)
+
+            # I need to have the exact same number of neighbours and connections for each node
+            for i in range(len(self.neighbours)):
+                current_neighbour = self.neighbours[i]
+                current_connection = self.connections[i]
+
+                if current_connection.is_enabled:
+                    current_input = 0
+
+                    current_input += current_connection.weight * self.output_value
+                    current_input += self.bias
+
+                    current_neighbour.input_value += current_input
+        elif self.is_input_neuron:
+            # pass the input unchanged to the first hidden layer
+            self.output_value = input_value
+
+            for neighbour in self.neighbours:
+                neighbour.input_value += self.output_value
         else:
-            connected_nodes = self.neighbours
-            connections = self.connections
-
-            if connected_nodes.__len__() != connections.__len__():
-                print("(ERROR) in processing the nodes info; the number of nodes is not the same as the connections \n")
-                print("number of nodes: \n", connected_nodes.__len__())
-                print("number of connections: \n", connections.__len__())
-
-            for i in range(connected_nodes.__len__()):
-                sum_input += connected_nodes[i].output_value * connections[i].weight
-
-                sum_input += self.bias
-                self.output_value = self.activate(sum_input)
+            # just pass the output through the activation function
+            self.output_value = self.activate(self.input_value)
 
     def add_connection(self, connection: Connection):
         self.connections.append(connection)
 
-    def add_connection_next_layer(self, node: 'Node', connection: Connection):
-        self._neighbours.append(node)
+    def add_connection_next_layer(self, node_in_next_layer: 'Node', connection: Connection):
+        self._neighbours.append(node_in_next_layer)
         self.connections.append(connection)
 
     # ReLU's activation function
@@ -106,6 +166,14 @@ class Node:
     @classmethod
     def reset_id_counter(cls):
         cls._id_counter = 0
+
+    @property
+    def is_visited(self) -> bool:
+        return self._is_visited
+
+    @is_visited.setter
+    def is_visited(self, is_visited: bool) -> None:
+        self._is_visited = is_visited
 
     @property
     def bias(self) -> float:

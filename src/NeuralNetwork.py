@@ -14,7 +14,7 @@ global_innovation_counter = InnovationCounter()
 # global dictionary that keeps track of the innovation_numbers assigned to a connection between two nodes
 previous_innovation_numbers = {}
 
-""" 
+"""
 the gene has the nodes and the connections 
 it's the graph-like data-structure that holds them together
 """
@@ -36,15 +36,16 @@ class Gene:
         Node.reset_id_counter()
 
         if nodes is None:
-            self.nodes = []
+            self._nodes = []
         else:
-            self.nodes = nodes
+            self._nodes = nodes
         if connections is None:
             self.connections = []
         else:
             self.connections = connections
 
     # to-be-tested method that processes a given input
+    """
     def process_input(self, input_value: float) -> float:
         output = 0
 
@@ -52,15 +53,20 @@ class Gene:
             # call process_input_node in the Node class
             if node.is_input_neuron:
                 # !! trebuie trecut ca parametru output doar daca nu este in stratul de input
-                output += node.process_input_node(input_value)
+                output += node._process_input_node(input_value)
             else:
-                output += node.process_input_node(output)
+                output += node._process_input_node(output)
 
         return output
+    """
 
     @property
-    def get_nodes(self):
-        return self.nodes
+    def nodes(self) -> List[Node]:
+        return self._nodes
+
+    @nodes.setter
+    def nodes(self, nodes=List[Node] or None) -> None:
+        self._nodes = nodes
 
     @property
     def get_connections(self):
@@ -235,7 +241,7 @@ class Gene:
         for connection in self.connections:
             generated_num = np.random.uniform(0, 1)
             if generated_num < mutation_rate_disable_connection is True:
-                connection.is_enabled = False
+                connection._is_enabled = False
 
     def mutate_connections_enable_connection(self, mutation_rate_enable_connection: float):
         for connection in self.connections:
