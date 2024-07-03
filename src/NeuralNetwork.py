@@ -4,6 +4,7 @@ StartingDate: 2024-III-26
 Description: The concepts regarding neural networks
 """
 from typing import List
+from collections import deque
 
 import numpy as np
 from src.BuildingBlocks import Connection, Node, NodesNotConnectedException, InnovationCounter
@@ -44,21 +45,37 @@ class Gene:
         else:
             self.connections = connections
 
-    # to-be-tested method that processes a given input
     """
-    def process_input(self, input_value: float) -> float:
-        output = 0
+         the idea is to pass the input_value to a specific node and 'do the math':
+         i) sum the weighted inputs from all incoming connections
+         ii) add the bias to this sum
+         iii) apply the activation function
 
-        for node in self.nodes:
-            # call process_input_node in the Node class
-            if node.is_input_neuron:
-                # !! trebuie trecut ca parametru output doar daca nu este in stratul de input
-                output += node._process_input_node(input_value)
-            else:
-                output += node._process_input_node(output)
+        then, propagate the result into the nodes that are connected to the 'current node'/the one passed as a parameter
+        """
 
-        return output
-    """
+    # problema e aici; cred ca ar trebui sa procesezi current_node, si nu self,
+    # adica sa ai current_node._process_input_node(input_value)
+
+    # trebuie sa faci topological sort, pentru ca s-ar putea sa ai un nod care se coneteaza direct la un nod de output
+    # A topological sort
+    # may be performed on the nodes to find out in what order they should be selected for
+    # passing on their internally stored values.
+
+    def propagate_input(self, input_value: float) -> None:
+        queue = deque()
+        queue.append(self)
+
+        while len(queue) > 0:
+            current_node = queue.popleft()
+            current_node.is_visited = True
+
+            current_node.process_input_node(input_value)
+
+            for neighbour in current_node.neighbours:
+                if not neighbour.is_visited:
+                    queue.append(neighbour)
+                    neighbour.is_visited = True
 
     @property
     def nodes(self) -> List[Node]:
