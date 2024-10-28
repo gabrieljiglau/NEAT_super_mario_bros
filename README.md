@@ -1,4 +1,4 @@
-# NEAT_super_mario_bros
+# NEAT and Transformer architecture super_mario_bros
 
 Neuro-Evolution of Augmenting Topologies is an evolutionary approach (a genetic algorithm), that creates and evolves artificial neural networks(ANNs).
 It is a black-box optimization technique, an alternative to the more traditional reinforcement learning routes.
