@@ -1,0 +1,12 @@
+
+Current generation: 1 
+Genome ID: 1, Distance: 313, Time: 118, Success: False, Fitness: 361.0
+Genome ID: 2, Distance: 0, Time: 151, Success: False, Fitness: -46.0
+Genome ID: 3, Distance: 0, Time: 151, Success: False, Fitness: -46.0
+Genome ID: 4, Distance: 40, Time: 151, Success: False, Fitness: -6.0
+Genome ID: 5, Distance: 296, Time: 160, Success: False, Fitness: 384.0
+Genome ID: 6, Distance: 307, Time: 130, Success: False, Fitness: 366.0
+Genome ID: 7, Distance: 0, Time: 151, Success: False, Fitness: -46.0
+Genome ID: 8, Distance: 594, Time: 490, Success: False, Fitness: 857.0
+Genome ID: 9, Distance: 40, Time: 151, Success: False, Fitness: -6.0
+Genome ID: 10, Distance: 40, Time: 151, Success: False, Fitness: -6.0
