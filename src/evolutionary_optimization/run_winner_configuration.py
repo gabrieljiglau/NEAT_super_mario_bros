@@ -8,7 +8,7 @@ import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from nes_py.wrappers import JoypadSpace
 
-env = gym_super_mario_bros.make('SuperMarioBros-v0')
+env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
 
@@ -26,7 +26,7 @@ def run_neat():
     print(c)
 
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, '../../tests/evolutionary_approach/config')
+    config_path = os.path.join(local_dir, '../../tests/evolutionary_optimization/config')
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)

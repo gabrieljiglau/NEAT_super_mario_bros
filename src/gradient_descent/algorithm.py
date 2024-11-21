@@ -50,29 +50,50 @@ class PPOMemory:
         self.dones = []
 
 
-class ActorNetwork(nn.Module):
-    # alpha = learning_rate
-    def __init__(self, num_actions, input_dims, alpha, fc1_dims=256, fc2_dims=256, chkpt_dir='tmp'):
-        super(ActorNetwork, self).__init__()
+class TransformerActorNetwork(nn.Module):
+    def __init__(self, num_actions, input_dims, alpha, d_model=128, nhead=4, num_layers=2, chkpt_dir='tmp'):
+        super(TransformerActorNetwork, self).__init__()
 
         self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
-        self.actor = nn.Sequential(
-            nn.Linear(*input_dims, fc1_dims),
-            nn.ReLU(),
-            nn.Linear(fc1_dims, fc2_dims),
-            nn.ReLU(),
-            nn.Linear(fc2_dims, num_actions),
-            nn.Softmax(dim=-1)
+
+        # Assuming input_dims = (30, 32), we flatten the input to (960)
+        self.fc_in = nn.Linear(input_dims[0], d_model)  # input_dims[0] * input_dims[1] = 960
+
+        # Transformer encoder
+        self.transformer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead),
+            num_layers=num_layers
         )
 
+        # Final fully connected layer for output (num_actions)
+        self.fc_out = nn.Linear(d_model, num_actions)
+
+        # Optimizer
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+
+        # Device configuration
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         self.to(self.device)
 
     def forward(self, state):
-        distribution = self.actor(state)
+        # Flatten the state input to (batch_size, 960)
+        state = state.view(state.size(0), -1)  # Flatten to (batch_size, 960)
+        x = self.fc_in(state)  # Input is now (batch_size, 960)
 
-        return Categorical(distribution)
+        # Prepare for transformer input (add sequence dimension)
+        x = x.unsqueeze(1)  # Transformer expects (seq_len, batch, embedding_dim)
+
+        # Pass through transformer
+        transformer_out = self.transformer(x)
+
+        # Take the output, project to action space
+        x = transformer_out.squeeze(1)  # Remove sequence dimension
+        x = self.fc_out(x)
+
+        # Apply softmax to get action probabilities
+        action_probs = T.softmax(x, dim=-1)
+
+        return Categorical(action_probs)
 
     def save_checkpoint(self):
         T.save(self.state_dict(), self.checkpoint_file)
@@ -121,7 +142,7 @@ class Agent:
         self.num_epochs = num_epochs
         self.gae_lambda = gae_lambda
 
-        self.actor = ActorNetwork(num_actions, input_dims, alpha)
+        self.actor = TransformerActorNetwork(num_actions, input_dims, alpha)
         self.critic = CriticNetwork(input_dims, alpha)
         self.memory = PPOMemory(batch_size)
 
@@ -139,12 +160,23 @@ class Agent:
         self.critic.load_checkpoint()
 
     def choose_action(self, observation):
-        state = T.tensor([observation], dtype=T.float).to(self.actor.device)
+        # Ensure observation is a numpy array and correctly reshaped
+        observation = np.array(observation)
 
-        distribution = self.actor(state)
+        # Convert observation to a PyTorch tensor and ensure the shape is compatible with the input layer
+        state = T.tensor(observation, dtype=T.float).to(self.actor.device)
+
+        # Flatten state to (1, 960) - input layer expects flattened observation
+        state = state.view(1, -1)  # Flatten the observation to (1, 960)
+
+        # Pass through actor to get action distribution
+        distribution = self.actor(state)  # Input is now (1, 960)
         action = distribution.sample()
+
+        # Pass through critic (same flattened state)
         value = self.critic(state)
 
+        # Extract log probabilities and values
         probs = T.squeeze(distribution.log_prob(action)).item()
         action = T.squeeze(action).item()
         value = T.squeeze(value).item()

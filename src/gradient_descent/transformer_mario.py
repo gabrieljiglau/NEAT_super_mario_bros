@@ -3,8 +3,8 @@ import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 from nes_py.wrappers import JoypadSpace
 import numpy as np
-from src.reinforcement_learning.algorithm import Agent
-from src.reinforcement_learning.plots import plot_learning_curve
+from src.gradient_descent.algorithm import Agent
+from src.utils import plot_learning_curve
 
 
 # Preprocess function to resize and convert the observation to grayscale
@@ -19,7 +19,8 @@ def preprocess(ob, inx, iny):
 if __name__ == '__main__':
 
     # Initialize Super Mario environment with SIMPLE_MOVEMENT
-    env = gym_super_mario_bros.make('SuperMarioBros-v0')
+    stage_name = 'SuperMarioBros-1-1-v3'
+    env = gym_super_mario_bros.make(stage_name)
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
     N = 20  # Horizon
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     num_games = 100
     best_score = env.reward_range[0]
     score_history = []
-    figure_file = 'plots/cartpole.png'
+    figure_file = 'plots/mario.png'
 
     learn_iters = 0
 
@@ -60,7 +61,7 @@ if __name__ == '__main__':
             action, prob, val = agent.choose_action(observation)
 
             # Step the environment with the chosen action
-            new_state, reward, done, truncated, info = env.step(action)
+            new_state, reward, done, info = env.step(action)
 
             # Preprocess new state (next observation)
             new_state = preprocess(new_state, inx, iny)
