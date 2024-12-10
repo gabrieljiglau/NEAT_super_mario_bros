@@ -1,34 +1,14 @@
-from enum import Enum
 from src.evolutionary_optimization.utils import get_bit_num
 
+def define_parameters():
 
-# TODO: i)continue with the other classes for the Discrete and BooleanParameter
-#       ii) combine all continuous, discrete and boolean parameters in a list of their own
-class ContinuousParameter:
+    # doar o singura lista, dar care va fi pusa in ordinea 'mea'
 
-    def __init__(self, lower_bound: float, upper_bound: float, bit_string: str, mutation_rate: float, precision=3):
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
-        self.bit_string = bit_string
-        self.mutation_rate = mutation_rate
-        self.precision = precision
-        self.is_continuous = True
-        self.is_boolean = False
-        self.is_discrete = False
+    """
+    add each hyperparameter that will be used in NEAT to the final parameters list
+    :return: the previously built list
+    """
 
-
-"""
-class DiscreteParameter(ContinuousParameter):
-
-    def __init__(self, lower_bound: float, upper_bound: float, bit_string: str,
-                 mutation_rate: float, is_boolean, precision=3):
-        if is_boolean:
-
-        super.__init__(lower_bound,)
-"""
-
-
-class HyperparameterSize(Enum):
     POP_SIZE = 17
     RESET_ON_EXTINCTION = 1  # True/False
 
@@ -50,15 +30,38 @@ class HyperparameterSize(Enum):
     COMPATIBILITY_DISJOINT_COEFFICIENT = 13
     COMPATIBILITY_WEIGHT_COEFFICIENT = 13
 
+class ContinuousParameter:
 
+    def __init__(self, lower_bound: float, upper_bound: float, mutation_rate: float, precision=5):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.bit_string = ""
+        self.bit_length = 0
+        self.mutation_rate = mutation_rate
+        self.precision = precision
+        self.is_continuous = True
+        self.is_boolean = False
+        self.is_discrete = False
 
-# in total, there are 43 hyperparameters
+class DiscreteParameter(ContinuousParameter):
+
+    def __init__(self, lower_bound:float, upper_bound: float, mutation_rate: float, values: list,
+                 is_boolean: bool, precision=5,):
+
+        super().__init__(lower_bound, upper_bound, mutation_rate, precision)
+        self.values = values
+        self.num_values = len(values)
+        self.bit_string = ""
+        self.bit_length = 0
+
+        self.is_continuous = False
+        self.is_discrete = True
+        self.is_boolean = is_boolean
+
 class Solution:
 
-    def __init__(self, bitstring: str, mutate_pop_size, mutate_boolean, mutate_discrete, mutate_continuous):
+    def __init__(self, bitstring: str, mutate_discrete, mutate_continuous):
         self.bitstring = bitstring
-        self.mutate_pop_size = mutate_pop_size
-        self.mutate_boolean = mutate_boolean
         self.mutate_discrete = mutate_discrete
         self.mutate_continuous = mutate_continuous
         self.fitness = 0
