@@ -13,16 +13,21 @@ env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
 generation = 0
 
-def eval_genomes(genomes, config):
+best_individual_fitness = float('-inf')
+best_individual_stats = {"distance": 0, "time": 0, "fitness": 0}
 
-    global generation
+def eval_genomes(genomes, config):
+    global generation, best_individual_fitness, best_individual_stats
     generation += 1
 
-    log_file = "training_statistics.txt"  # File to log statistics
+    log_file = "training_statistics.txt"
     first_time = True
 
-    with open(log_file, "a") as log:  # Open in append mode
+    total_distance = 0
+    total_fitness = 0
+    total_time = 0
 
+    with open(log_file, "a") as log:
         if first_time:
             log.write(f"Current generation: {generation} \n")
             first_time = False
@@ -70,6 +75,11 @@ def eval_genomes(genomes, config):
                 genome.fitness += rew
 
                 xpos = info.get('x_pos', 0)
+
+                # Penalize lack of progress
+                if xpos == xpos_max:
+                    genome.fitness -= 0.01
+
                 if xpos > xpos_max:
                     genome.fitness += 1
                     xpos_max = xpos
@@ -83,7 +93,7 @@ def eval_genomes(genomes, config):
                 # Track distance and success status
                 distance_traveled = xpos
                 if info.get('flag_get', False):  # Success if the flag reached
-                    success = True
+                    success += 1
                     done = True
 
                 # End if life is lost or counter exceeds the threshold
@@ -91,18 +101,41 @@ def eval_genomes(genomes, config):
                 if life < 2 or counter == 150:
                     done = True
 
-            # Log statistics for this genome
+            # Update per-generation statistics
             time_taken = frame
+            total_distance += distance_traveled
+            total_fitness += genome.fitness
+            total_time += time_taken
 
-            log.write(
-                f"Genome ID: {gene_id}, Distance: {distance_traveled}, Time: {time_taken}, "
-                f"Success: {success}, Fitness: {genome.fitness}\n"
-            )
-            log.flush()  # Ensure logs are written to file
+            # Check for the best individual
+            if genome.fitness > best_individual_fitness:
+                best_individual_fitness = genome.fitness
+                best_individual_stats = {
+                    "distance": distance_traveled,
+                    "time": time_taken,
+                    "fitness": genome.fitness,
+                }
 
-            # Print genome summary to console
+            # Print stats for the current individual to the console
             print_info(gene_id, genome.fitness, info)
 
+        # Log statistics every 20 generations
+        if generation % 20 == 0:
+            mean_distance = total_distance / len(genomes)
+            mean_fitness = total_fitness / len(genomes)
+            mean_time = total_time / len(genomes)
+
+            log.write(f"\n=== Statistics for Generation {generation} ===\n")
+            log.write(f"Mean Distance: {mean_distance:.2f}\n")
+            log.write(f"Mean Fitness: {mean_fitness:.2f}\n")
+            log.write(f"Mean Time: {mean_time:.2f}\n")
+            log.write(f"Best Individual - Distance: {best_individual_stats['distance']}, "
+                      f"Time: {best_individual_stats['time']}, "
+                      f"Fitness: {best_individual_stats['fitness']}\n\n")
+            log.flush()
+
+        # Print success rate for this generation
+        log.write(f"Success rate: {success / len(genomes):.2f}\n")
 
 def convert_matrix_into_array(observation, image_array):
     for x in observation:
@@ -128,15 +161,34 @@ def run(config_file, total_iterations: int = 100) -> None:
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
-    winner = population.run(eval_genomes, total_iterations)
+    global generation
 
-    with open('../../tests/winner', 'wb') as output:
+    for gen in range(1, total_iterations + 1):
+        population.run(eval_genomes, 1)
+
+        # save every 100 generations
+        if generation % 100 == 0:
+            print(f"Saving winner of generation {generation}...")
+            best_genome = stats.best_genomes(1)[0]
+            save_winner(best_genome, generation)
+
+    winner = stats.best_genomes(1)[0]
+    with open('../../models/final_winner', 'wb') as output:
         pickle.dump(winner, output, 1)
+    print("Final winner saved.")
+
+def save_winner(genome, generation_number):
+    """Save the winner genome to a file."""
+    filename = f'../../models/winner_gen_{generation_number}.pkl'
+    with open(filename, 'wb') as output:
+        pickle.dump(genome, output, 1)
+    print(f"Winner of generation {generation_number + 1} saved to {filename}.")
 
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "../../tests/evolutionary_optimization/config")
+    config_path = os.path.join(local_dir, "config")
+    new_config = 'config1'
 
-    MAX_GENERATION_COUNT = 1
-    run(config_path, MAX_GENERATION_COUNT)
+    MAX_GENERATION_COUNT = 2000
+    run(new_config, MAX_GENERATION_COUNT)
