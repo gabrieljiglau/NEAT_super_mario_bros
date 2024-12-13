@@ -1,4 +1,4 @@
-# NEAT and Transformer architecture super_mario_bros
+# NEAT and Meta-Optimisation for super_mario_bros
 
 ---
 
@@ -24,29 +24,11 @@ topological innovations are protected and have time to optimize their structure,
 
 
 ---
-### Transformer :
-A Transformer is an attention-based encoder-decoder neural network architecture. The heart of these models is the
-attention mechanism.
+### Meta-Optimisation:
+NEAT has over 50 hyperparameters that can be adjusted.
+Satisfactory results are delivered if only these parameters are carefully chosen.
+Selecting by trial and error is a laborious task and is also susceptible to misconceptions or personal biases.
 
-
-Just as self-attention in natural language processing allows a model to connect words based on 
-context, in the context of Reinforcement Learning, it enables the model to focus on different aspects of the environment
-by relating various parts of the input simultaneously, enabling it to prioritise important features of the game-state
-(the position of the player, enemies, and obstacles) when making decisions. 
-
-
-In other words, the attention mechanism is used for learning the importance of different components
-from the game state dynamically, allowing the agent to adjust its focus based on the current situation. 
-By using multiple attention heads, the agent can capture various relationships and patterns simultaneously
-(i.e. focusing on nearby enemies when under threat or on exploring potential paths when navigating).
-
-
-* the encoder: maps an input sequence into an abstract continuous representation that holds 
-all the learned information of that input
-
-
-* the decoder: takes the continuous representation (got from the encoder), and step by step generates 
-a single output while also being fed the previous output
-  
-
-* multi-headed attention in the encoder applies a specific attention mechanism called self-attention.
+One approach for finding good parameters for an optimizer is to employ yet another overlaying optimizer, called 
+meta-optimizer. In this case, the optimizer is yet another Genetic Algorithm that uses mechanisms inspired by biological
+evolution (such as selection, mutation, recombination) to guide it in the large fitness landscape.
