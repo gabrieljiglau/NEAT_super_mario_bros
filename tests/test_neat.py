@@ -1,5 +1,5 @@
 import unittest
-from tests.evolutionary_optimization.edit_neat_configuration import run_neat
+from tests.edit_neat_configuration import run_neat
 
 class TestNEATConfig(unittest.TestCase):
 

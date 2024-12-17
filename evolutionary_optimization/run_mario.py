@@ -53,30 +53,33 @@ def eval_genomes(genomes, config):
                 image_array = []
                 frame += 1
 
-                # Preprocess observation
+                # preprocess observation
                 observation = cv2.resize(observation, (width, height))
                 observation = cv2.cvtColor(observation, cv2.COLOR_BGR2GRAY)
                 observation = np.reshape(observation, (width, height))
                 image_array = convert_matrix_into_array(observation, image_array)
 
-                # Neural network decision
                 network_output = neural_network.activate(image_array)
+                action_index = np.argmax(network_output)
+
+                # previously with 3 output nodes as binary outputs
+                """
                 network_output = [max(0, min(1, x)) for x in network_output]
                 binary_string = "".join(str(round(x)) for x in network_output)
-                int_output = int(binary_string, 2)
-                if int_output == 7:
-                    int_output = 0
+                action_index = int(binary_string, 2)
+                if action_index == 7:
+                    action_index = 0
+                """
 
-                # Environment step
-                observation, reward, done, info = env.step(int_output)
+                observation, reward, done, info = env.step(action_index)
 
-                # Update fitness
+                # update fitness
                 rew = reward if not isinstance(reward, np.generic) else reward.item()
                 genome.fitness += rew
 
                 xpos = info.get('x_pos', 0)
 
-                # Penalize lack of progress
+                # penalize lack of progress
                 if xpos == xpos_max:
                     genome.fitness -= 0.01
 
@@ -90,24 +93,23 @@ def eval_genomes(genomes, config):
                 else:
                     counter += 1
 
-                # Track distance and success status
                 distance_traveled = xpos
-                if info.get('flag_get', False):  # Success if the flag reached
+                if info.get('flag_get', False):  # success if the flag reached
                     success += 1
                     done = True
 
-                # End if life is lost or counter exceeds the threshold
+                # end if life is lost or counter exceeds the threshold
                 life = info.get('life', 0)
                 if life < 2 or counter == 150:
                     done = True
 
-            # Update per-generation statistics
+            # update per-generation statistics
             time_taken = frame
             total_distance += distance_traveled
             total_fitness += genome.fitness
             total_time += time_taken
 
-            # Check for the best individual
+            # check for the best individual
             if genome.fitness > best_individual_fitness:
                 best_individual_fitness = genome.fitness
                 best_individual_stats = {
@@ -116,10 +118,9 @@ def eval_genomes(genomes, config):
                     "fitness": genome.fitness,
                 }
 
-            # Print stats for the current individual to the console
             print_info(gene_id, genome.fitness, info)
 
-        # Log statistics every 20 generations
+        # statistics every 20 generations
         if generation % 20 == 0:
             mean_distance = total_distance / len(genomes)
             mean_fitness = total_fitness / len(genomes)
@@ -134,7 +135,7 @@ def eval_genomes(genomes, config):
                       f"Fitness: {best_individual_stats['fitness']}\n\n")
             log.flush()
 
-        # Print success rate for this generation
+        # success rate for this generation
         log.write(f"Success rate: {success / len(genomes):.2f}\n")
 
 def convert_matrix_into_array(observation, image_array):
@@ -191,4 +192,4 @@ if __name__ == "__main__":
     new_config = 'config1'
 
     MAX_GENERATION_COUNT = 2000
-    run(new_config, MAX_GENERATION_COUNT)
+    run(config_path, MAX_GENERATION_COUNT)

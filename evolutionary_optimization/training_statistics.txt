@@ -80,3 +80,4 @@ Success rate: 0.00
 Current generation: 122 
 Success rate: 0.00
 Current generation: 123 
+Current generation: 1 

@@ -19,19 +19,19 @@ def preprocess(ob, inx, iny):
     return ob
 
 def run_neat():
-    with open('../../tests/winner', 'rb') as f:
+    with open("../models/winner_gen_200_second.pkl", 'rb') as f:
         c = pickle.load(f)
 
     print('Loaded genome:')
     print(c)
 
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, '../../tests/evolutionary_optimization/config')
+    config_path = os.path.join(local_dir, '../tests/config')
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
 
-    net = neat.nn.FeedForwardNetwork.create(c, config)
+    neural_network = neat.nn.FeedForwardNetwork.create(c, config)
 
     inx, iny, inc = env.observation_space.shape
     inx = int(inx / 8)
@@ -43,22 +43,21 @@ def run_neat():
     while not done:
         env.render()
 
-        # Preprocess the observation
         processed_ob = preprocess(observation, inx, iny)
-        imgarray = processed_ob.flatten()
+        image_array = processed_ob.flatten()
 
-        # Get the action from the neural network
-        nn_output = net.activate(imgarray)
+        """
         nn_output = [max(0, min(1, x)) for x in nn_output]
         binary_string = "".join(str(round(x)) for x in nn_output)
         int_output = int(binary_string, 2)
 
-        # Ensure the action is within the valid range
         num_actions = len(SIMPLE_MOVEMENT)
-        int_output = int_output % num_actions  # Wrap around to ensure valid index
+        int_output = int_output % num_actions
+        """
 
-        # Step the environment using the neural network's action
-        observation, reward, done, info = env.step(int_output)
+        network_output = neural_network.activate(image_array)
+        action_index = np.argmax(network_output)
+        observation, reward, done, info = env.step(action_index)
 
 
 if __name__ == '__main__':

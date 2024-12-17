@@ -1,0 +1,81 @@
+
+    [NEAT]
+    fitness_criterion     = max
+    fitness_threshold     = 100000
+    pop_size              = 96
+    reset_on_extinction   = True
+
+    [DefaultGenome]
+    # node activation options
+    activation_default      = relu
+    activation_mutate_rate  = 0.15071
+    activation_options      = log
+
+    # node aggregation options
+    aggregation_default     = median
+    aggregation_mutate_rate = 0.30109
+    aggregation_options     = sum
+
+    # node bias options
+    bias_init_mean          = 0.71232
+    bias_init_stdev         = 2.08729
+    bias_max_value          = 8.21553
+    bias_min_value          = -5.24169
+    bias_mutate_power       = 0.61433
+    bias_mutate_rate        = 0.97456
+    bias_replace_rate       = 5.49787
+
+    # genome compatibility options
+    compatibility_disjoint_coefficient = 4.63991
+    compatibility_weight_coefficient   = 2.35657
+
+    # connection add/remove rates
+    conn_add_prob           = 0.16875
+    conn_delete_prob        = 0.3
+
+    # connection enable options
+    enabled_default         = True
+    enabled_mutate_rate     = 0.28986
+
+    feed_forward            =  True
+    initial_connection      = full_direct
+
+    # node add/remove rates
+    node_add_prob           = 0.54925
+    node_delete_prob        = 0.48574
+
+    # network parameters
+    num_hidden              = 2
+    num_inputs              = 960
+    num_outputs             = 7
+
+    # node response options
+    response_init_mean      = 0.51996
+    response_init_stdev     = 4.2269
+    response_max_value      = 23.33404
+    response_min_value      = -27.22547
+    response_mutate_power   = 0.56996
+    response_mutate_rate    = 0.74744
+    response_replace_rate   = 0.94245
+
+    # connection weight options
+    weight_init_mean        = -0.95393
+    weight_init_stdev       = 0.07673
+    weight_max_value        = 3.35302
+    weight_min_value        = -7.42736
+    weight_mutate_power     = 0.61449
+    weight_mutate_rate      = 0.0133
+    weight_replace_rate     = 0.70973
+
+    [DefaultSpeciesSet]
+    compatibility_threshold = 2
+
+    [DefaultStagnation]
+    species_fitness_func =  max
+    max_stagnation       =  3
+    species_elitism      = 4
+
+    [DefaultReproduction]
+    elitism            = 4
+    survival_threshold = 0.93945
+    
