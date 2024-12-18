@@ -120,8 +120,8 @@ def eval_genomes(genomes, config):
 
             print_info(gene_id, genome.fitness, info)
 
-        # statistics every 20 generations
-        if generation % 20 == 0:
+        # statistics every 2 generations
+        if generation % 2 == 0:
             mean_distance = total_distance / len(genomes)
             mean_fitness = total_fitness / len(genomes)
             mean_time = total_time / len(genomes)
@@ -138,6 +138,7 @@ def eval_genomes(genomes, config):
         # success rate for this generation
         log.write(f"Success rate: {success / len(genomes):.2f}\n")
 
+
 def convert_matrix_into_array(observation, image_array):
     for x in observation:
         for y in x:
@@ -153,7 +154,8 @@ def print_info(gene_id: int, gene_fitness: float, info: dict) -> None:
     print('FITNESS + SCORE: ', gene_fitness)
 
 
-def run(config_file, total_iterations: int = 100) -> None:
+def run_mario(config_file, total_iterations: int = 50):
+
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                          neat.DefaultStagnation, config_file)
     population = neat.Population(config)
@@ -176,7 +178,7 @@ def run(config_file, total_iterations: int = 100) -> None:
     winner = stats.best_genomes(1)[0]
     with open('../../models/final_winner', 'wb') as output:
         pickle.dump(winner, output, 1)
-    print("Final winner saved.")
+    return stats.best_genomes(1)[0]
 
 def save_winner(genome, generation_number):
     """Save the winner genome to a file."""
@@ -192,4 +194,4 @@ if __name__ == "__main__":
     new_config = 'config1'
 
     MAX_GENERATION_COUNT = 2000
-    run(config_path, MAX_GENERATION_COUNT)
+    run_mario(config_path, MAX_GENERATION_COUNT)

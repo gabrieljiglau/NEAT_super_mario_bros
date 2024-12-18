@@ -2,7 +2,7 @@ import os.path
 from typing import List
 
 from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
-    build_config, import_template, add_possible_mutation
+    build_config, import_template, add_possible_mutation, get_bit_num
 
 
 def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
@@ -125,12 +125,6 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
     return parameters
 
 
-# TODO : i)make sure the generated configs are valid
-#       ii)check the validity of the generated configs
-#      iii)check why the network has only 3 outputs?? because they were considered binary: 2^3 = 8
-#      iv)build up the genetic algorithm
-
-
 class ContinuousParameter:
 
     def __init__(self, lower_bound: float, upper_bound: float, mutation_rate: float, precision=5):
@@ -172,11 +166,15 @@ class IndividualSolution:
     e.g. config1 for the first ever individual, config68 for the 68th individual ever created etc.
     """
 
-    def __init__(self, big_bitstring: str | None):
+    def __init__(self, big_bitstring=None):
 
         IndividualSolution.individual_id += 1
 
-        self.big_bitstring = big_bitstring
+        if big_bitstring is None:
+            self.big_bitstring = ""
+        else:
+            self.big_bitstring = big_bitstring
+
         self.decoded_parameters = []
         self.parameters = []
         self.config_path = None
@@ -227,51 +225,95 @@ class IndividualSolution:
         self.big_bitstring = ''.join(final_bitstring)
         print(f"big_bitstring = {self.big_bitstring}")
 
-    # TODO: is it necessary to decode the solution when mutation? can't we pass the list of the corresponding bitrsing ?
-    #       WHY, WHY NOT?
-    def mutate(self, mutate_discrete: float, mutate_continuous: float):
+    def mutate_individual_solution(self, mutate_discrete: float, mutate_continuous: float):
+        """
+        iterates over all the parameters, keeping track of the gene's position and applying the mutation
+        based on the nature of the parameter (discrete or continuous)
+        """
+
+        result = []
+        current_index = 0
 
         for param in self.parameters:
-            if param.is_continuous:
-                add_possible_mutation(decode_continuous(param, param.lower_bound, param.upper_bound, param.precision),
-                                      mutate_continuous)
-            pass
 
-    def decode_solution(self):
+            bit_count = get_bit_num(param.lower_bound, param.upper_bound, param.precision)
+            current_bitstring = self.big_bitstring[current_index:current_index + bit_count]
+
+            if param.is_continuous:
+                result.append(add_possible_mutation(current_bitstring, mutate_continuous))
+            elif not param.is_continuous:
+                result.append(add_possible_mutation(current_bitstring, mutate_discrete))
+
+            current_index += bit_count
+
+        self.big_bitstring = ''.join(result)
+        print(f"Bitstring after mutation: {self.big_bitstring}")
+        return self.big_bitstring
+
+    def decode_individual_solution(self):
+        """
+        iterates over all the parameters, keeping track of the gene's position and decoding it, based on the
+        nature of the parameter (discrete or continuous)
+        """
 
         if len(self.parameters) == 0:
             print("Trying to decode an empty list")
             return
 
         decoded_parameters = []
+        current_index = 0
 
         for param in self.parameters:
+
+            bit_count = get_bit_num(param.lower_bound, param.upper_bound, param.precision)
+            param_bitstring = self.big_bitstring[current_index:current_index + bit_count]
+
             if not param.is_continuous:
-                param.actual_value = decode_discrete(param.bitstring, param.lower_bound,
+                param.actual_value = decode_discrete(param_bitstring, param.lower_bound,
                                                      param.upper_bound, param.values)
             elif param.is_continuous:
-                param.actual_value = decode_continuous(param.bitstring, param.lower_bound,
+                param.actual_value = decode_continuous(param_bitstring, param.lower_bound,
                                                        param.upper_bound, param.precision)
             else:
-                print("You really shouldn't get here!")
-                print("More than 2 categories of parameters detected when decoding the solution!")
+                print("Unexpected parameter type detected during decoding!")
 
             decoded_parameters.append(param.actual_value)
+            current_index += bit_count
 
         self.decoded_parameters = decoded_parameters
         return self.decoded_parameters
 
 
+# TODO: refactor the representation for Solution; it should contain List[IndividualSolution]
+#       the implementation should also be straight forward
 class Solution:
     """
     the solution class aggregates a whole generation, with each individual being of type IndividualSolution
     """
 
-    def __init__(self, solution_List: List[IndividualSolution]):
-        self.solution_list = solution_List
+    def __init__(self, solution_list: List[IndividualSolution] = None):
+        if solution_list is None:
+            self.solution_list = []
+        else:
+            self.solution_list = solution_list
 
     def set_solution(self, pop_size, mutate_discrete, mutate_continuous, precision) -> List[IndividualSolution]:
         for i in range(pop_size):
             self.solution_list[i].set_initial_solution(mutate_discrete, mutate_continuous, precision)
 
         return self.solution_list
+
+    def mutate(self, mutate_discrete, mutate_continuous, precision):
+        pass
+
+    def evaluate_solution(self):
+        pass
+
+
+if __name__ == '__main__':
+    solution = IndividualSolution()
+    solution.set_initial_solution(0.08, 0.07, 5)
+    print(f"Decoded solution: {solution.decode_individual_solution()}")
+
+    solution.mutate_individual_solution(0.42, 0.57)
+    print(f"Decoded solution: {solution.decode_individual_solution()}")

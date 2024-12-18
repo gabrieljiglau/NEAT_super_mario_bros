@@ -136,7 +136,7 @@ def decode_continuous(bitstring: str, lower: float, upper: float, precision: int
 def decode_discrete(bitstring: str, lower: int, upper:int, possible_values: list):
 
     """
-    it returns the item at a given index from the input list
+    return the item at a given index from the input list
     """
 
     value = int(bitstring, 2)
