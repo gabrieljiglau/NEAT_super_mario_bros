@@ -1,6 +1,5 @@
 import os.path
 from typing import List
-
 from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
 
@@ -177,7 +176,7 @@ class IndividualSolution:
 
         self.decoded_parameters = []
         self.parameters = []
-        self.config_path = None
+        self.config_path = self.create_config()
         self.fitness = 0
         """
         the fitness will be the best distance covered by an individual in a complete fixed execution of NEAT
@@ -187,7 +186,9 @@ class IndividualSolution:
     def __getitem__(self, index):
         return self.parameters[index]
 
-    def create_config(self, template):
+    def create_config(self):
+
+        template = import_template()
 
         file_path = f"config{self.individual_id}"
         self.config_path = file_path
@@ -196,21 +197,22 @@ class IndividualSolution:
         try:
             with open(file_path, 'w') as f:
                 f.write(config_string)
+            return file_path
         except IOError:
             print(f"Error when writing to file {self.config_path}")
 
-    """
-    after each generation, delete the configs files that were created for every solution, except the best
-    """
-
     def delete_config(self):
+        """
+        after each generation, you should delete the config created files for every solution, except the best
+        """
+
         if self.config_path and os.path.exists(self.config_path):
             os.remove(self.config_path)
             self.config_path = None
 
     def set_initial_solution(self, mutate_discrete: float, mutate_continuous: float, precision: int):
-        final_bitstring = []
 
+        final_bitstring = []
         self.parameters = define_parameters(mutate_discrete, mutate_continuous, precision)
 
         for param in self.parameters:
@@ -223,32 +225,40 @@ class IndividualSolution:
             final_bitstring.append(bitstring)
 
         self.big_bitstring = ''.join(final_bitstring)
-        print(f"big_bitstring = {self.big_bitstring}")
 
-    def mutate_individual_solution(self, mutate_discrete: float, mutate_continuous: float):
+    @classmethod
+    def mutate_individual_solution(cls, individual, mutate_discrete: float, mutate_continuous: float) -> str:
         """
-        iterates over all the parameters, keeping track of the gene's position and applying the mutation
-        based on the nature of the parameter (discrete or continuous)
+        Class method to mutate an individual solution.
+
+        Args:
+            cls: The class itself (passed automatically for class methods).
+            individual: The individual solution to mutate (an instance of IndividualSolution).
+            mutate_discrete: Probability for discrete mutation.
+            mutate_continuous: Probability for continuous mutation.
+
+        Returns:
+            The mutated bitstring of the individual solution.
         """
 
         result = []
         current_index = 0
 
-        for param in self.parameters:
-
+        for param in individual.parameters:
             bit_count = get_bit_num(param.lower_bound, param.upper_bound, param.precision)
-            current_bitstring = self.big_bitstring[current_index:current_index + bit_count]
+            current_bitstring = individual.big_bitstring[current_index:current_index + bit_count]
 
             if param.is_continuous:
                 result.append(add_possible_mutation(current_bitstring, mutate_continuous))
-            elif not param.is_continuous:
+            else:
                 result.append(add_possible_mutation(current_bitstring, mutate_discrete))
 
             current_index += bit_count
 
-        self.big_bitstring = ''.join(result)
-        print(f"Bitstring after mutation: {self.big_bitstring}")
-        return self.big_bitstring
+        individual.big_bitstring = ''.join(result)
+        print(f"Bitstring after mutation: {individual.big_bitstring}")
+
+        return individual.big_bitstring
 
     def decode_individual_solution(self):
         """
@@ -284,8 +294,6 @@ class IndividualSolution:
         return self.decoded_parameters
 
 
-# TODO: refactor the representation for Solution; it should contain List[IndividualSolution]
-#       the implementation should also be straight forward
 class Solution:
     """
     the solution class aggregates a whole generation, with each individual being of type IndividualSolution
@@ -297,17 +305,16 @@ class Solution:
         else:
             self.solution_list = solution_list
 
-    def set_solution(self, pop_size, mutate_discrete, mutate_continuous, precision) -> List[IndividualSolution]:
-        for i in range(pop_size):
-            self.solution_list[i].set_initial_solution(mutate_discrete, mutate_continuous, precision)
+    @classmethod
+    def create_first_generation(cls, pop_size, mutate_discrete, mutate_continuous, precision):
 
-        return self.solution_list
+        new_generation = []
+        for _ in range(pop_size):
+            individual = IndividualSolution()
+            individual.set_initial_solution(mutate_discrete, mutate_continuous, precision)
+            new_generation.append(individual)
 
-    def mutate(self, mutate_discrete, mutate_continuous, precision):
-        pass
-
-    def evaluate_solution(self):
-        pass
+        return cls(new_generation)
 
 
 if __name__ == '__main__':
