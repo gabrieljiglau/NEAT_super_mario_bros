@@ -1,6 +1,6 @@
 import os.path
 from typing import List
-from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
+from src.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
 
 
@@ -165,7 +165,7 @@ class IndividualSolution:
     e.g. config1 for the first ever individual, config68 for the 68th individual ever created etc.
     """
 
-    def __init__(self, big_bitstring=None):
+    def __init__(self, big_bitstring=None, config_path=None):
 
         IndividualSolution.individual_id += 1
 
@@ -173,10 +173,16 @@ class IndividualSolution:
             self.big_bitstring = ""
         else:
             self.big_bitstring = big_bitstring
-
         self.decoded_parameters = []
+        """
+        there should be an explicit decoding of the parameters -> after crossover
+        """
         self.parameters = []
-        self.config_path = self.create_config()
+
+        if config_path is None:
+            self.config_path = self.create_config()
+        else:
+            self.config_path = config_path
         self.fitness = 0
         """
         the fitness will be the best distance covered by an individual in a complete fixed execution of NEAT

@@ -1,17 +1,71 @@
 from typing import List, Dict
-from evolutionary_optimization.building_blocks import Solution, IndividualSolution
-from evolutionary_optimization.environment_interaction import run_mario
-from evolutionary_optimization.utils import Randomizer
+from src.building_blocks import Solution, IndividualSolution
+from src.environment_interaction import run_mario
+from src.utils import Randomizer, get_bit_num
 
 
 def select_elite(solution_list: List[IndividualSolution], number_of_elites:int):
     sorted_generation = sorted(solution_list, key=lambda individual: individual.fitness, reverse=True)
     return sorted_generation[0:number_of_elites], sorted_generation
 
-def crossover_parents(parent1: IndividualSolution, parent2: IndividualSolution) -> List[IndividualSolution]:
-    # TODO:add crossover here
-    # parent_list = []
-    pass
+def crossover_parents(parent1: IndividualSolution, parent2: IndividualSolution,
+                      crossover_points, crossover_rate) -> List[IndividualSolution] | None:
+
+    offspring_list = []
+
+    if len(parent1.parameters) != len(parent2.parameters):
+        print(f"The two selected parents for crossover do not have the same length; p1: {parent1}, p2:{parent2} ")
+        return None
+
+    new_bitstring1 = list(parent1.big_bitstring)
+    new_bitstring2 = list(parent2.big_bitstring)
+
+    did_crossover = False
+    for _ in range(crossover_points):
+        if Randomizer.next_double() < crossover_rate:
+
+            did_crossover = True
+            selected_gene_idx = Randomizer.get_int_between(0, len(parent1.parameters) - 1)
+            selected_gene = parent1.parameters[selected_gene_idx]
+
+            gene_start = sum(
+                get_bit_num(param.lower_bound, param.upper_bound, param.precision)
+                for param in parent1.parameters[:selected_gene_idx]
+            )
+
+            gene_bit_count = get_bit_num(
+                selected_gene.lower_bound, selected_gene.upper_bound, selected_gene.precision
+            )
+
+            gene_end = gene_start + gene_bit_count
+
+            bitstring1 = parent1.big_bitstring[gene_start:gene_end]
+            bitstring2 = parent2.big_bitstring[gene_start:gene_end]
+
+            if len(bitstring1) != len(bitstring2):
+                print(f"The selected parents mismatched on selected gene for crossover;  "
+                      f"b1:{bitstring1}, b2:{bitstring2}")
+                return None
+
+            crossover_point = Randomizer.get_int_between(0, len(bitstring1) - 1)
+
+            new_bitstring1[gene_start + crossover_point:gene_end] = \
+                parent2.big_bitstring[gene_start + crossover_point:gene_end]
+
+            new_bitstring2[gene_start + crossover_point:gene_end] = \
+                parent1.big_bitstring[gene_start + crossover_point:gene_end]
+
+    child1 = IndividualSolution(''.join(new_bitstring1))
+    child2 = IndividualSolution(''.join(new_bitstring2))
+
+    if did_crossover:
+        child1.decode_individual_solution()
+        child2.decode_individual_solution()
+
+    offspring_list.append(child1)
+    offspring_list.append(child2)
+
+    return offspring_list
 
 
 class MetaGeneticAlgorithm:
@@ -81,15 +135,11 @@ class MetaGeneticAlgorithm:
             while len(next_generation.solution_list) < self.pop_size:
 
                 selected_parents = self.select_candidates(sorted_population)
-                child1 = Solution()
-                child2 = Solution()
+                offsprings = crossover_parents(selected_parents[0], selected_parents[1],
+                                               self.crossover_points, self.crossover_rate)
 
-                if Randomizer.next_double() < self.crossover_rate:
-                    # TODO:add crossover here
-                    pass
-                else:
-                    child1 = selected_parents[0]
-                    child2 = selected_parents[1]
+                child1 = offsprings[0]
+                child2 = offsprings[1]
 
                 new_bitstring1 = IndividualSolution.mutate_individual_solution(child1, self.mutation_rate_discrete,
                                                                                self.mutation_rate_continuous)

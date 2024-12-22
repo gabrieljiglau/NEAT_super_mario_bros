@@ -2,85 +2,85 @@ import math
 import random
 
 base_template = """
-    [NEAT]
-    fitness_criterion     = max
-    fitness_threshold     = 100000
-    pop_size              = {pop_size}
-    reset_on_extinction   = {reset_on_extinction}
+[NEAT]
+fitness_criterion     = max
+fitness_threshold     = 100000
+pop_size              = {pop_size}
+reset_on_extinction   = {reset_on_extinction}
 
-    [DefaultGenome]
-    # node activation options
-    activation_default      = {activation_default}
-    activation_mutate_rate  = {activation_mutate_rate}
-    activation_options      = {activation_options}
+[DefaultGenome]
+# node activation options
+activation_default      = {activation_default}
+activation_mutate_rate  = {activation_mutate_rate}
+activation_options      = {activation_options}
 
-    # node aggregation options
-    aggregation_default     = {aggregation_default}
-    aggregation_mutate_rate = {aggregation_mutate_rate}
-    aggregation_options     = sum
+# node aggregation options
+aggregation_default     = {aggregation_default}
+aggregation_mutate_rate = {aggregation_mutate_rate}
+aggregation_options     = sum
 
-    # node bias options
-    bias_init_mean          = {bias_init_mean}
-    bias_init_stdev         = {bias_init_stdev}
-    bias_max_value          = {bias_max_value}
-    bias_min_value          = {bias_min_value}
-    bias_mutate_power       = {bias_mutate_power}
-    bias_mutate_rate        = {bias_mutate_rate}
-    bias_replace_rate       = {bias_replace_rate}
+# node bias options
+bias_init_mean          = {bias_init_mean}
+bias_init_stdev         = {bias_init_stdev}
+bias_max_value          = {bias_max_value}
+bias_min_value          = {bias_min_value}
+bias_mutate_power       = {bias_mutate_power}
+bias_mutate_rate        = {bias_mutate_rate}
+bias_replace_rate       = {bias_replace_rate}
 
-    # genome compatibility options
-    compatibility_disjoint_coefficient = {compatibility_disjoint_coefficient}
-    compatibility_weight_coefficient   = {compatibility_weight_coefficient}
+# genome compatibility options
+compatibility_disjoint_coefficient = {compatibility_disjoint_coefficient}
+compatibility_weight_coefficient   = {compatibility_weight_coefficient}
 
-    # connection add/remove rates
-    conn_add_prob           = {conn_add_prob}
-    conn_delete_prob        = {conn_delete_prob}
+# connection add/remove rates
+conn_add_prob           = {conn_add_prob}
+conn_delete_prob        = {conn_delete_prob}
 
-    # connection enable options
-    enabled_default         = {enabled_default}
-    enabled_mutate_rate     = {enabled_mutate_rate}
+# connection enable options
+enabled_default         = {enabled_default}
+enabled_mutate_rate     = {enabled_mutate_rate}
 
-    feed_forward            =  True
-    initial_connection      = {initial_connection}
+feed_forward            =  True
+initial_connection      = {initial_connection}
 
-    # node add/remove rates
-    node_add_prob           = {node_add_prob}
-    node_delete_prob        = {node_delete_prob}
+# node add/remove rates
+node_add_prob           = {node_add_prob}
+node_delete_prob        = {node_delete_prob}
 
-    # network parameters
-    num_hidden              = {num_hidden}
-    num_inputs              = 960
-    num_outputs             = 7
+# network parameters
+num_hidden              = {num_hidden}
+num_inputs              = 960
+num_outputs             = 7
 
-    # node response options
-    response_init_mean      = {response_init_mean}
-    response_init_stdev     = {response_init_stdev}
-    response_max_value      = {response_max_value}
-    response_min_value      = {response_min_value}
-    response_mutate_power   = {response_mutate_power}
-    response_mutate_rate    = {response_mutate_rate}
-    response_replace_rate   = {response_replace_rate}
+# node response options
+response_init_mean      = {response_init_mean}
+response_init_stdev     = {response_init_stdev}
+response_max_value      = {response_max_value}
+response_min_value      = {response_min_value}
+response_mutate_power   = {response_mutate_power}
+response_mutate_rate    = {response_mutate_rate}
+response_replace_rate   = {response_replace_rate}
 
-    # connection weight options
-    weight_init_mean        = {weight_init_mean}
-    weight_init_stdev       = {weight_init_stdev}
-    weight_max_value        = {weight_max_value}
-    weight_min_value        = {weight_min_value}
-    weight_mutate_power     = {weight_mutate_power}
-    weight_mutate_rate      = {weight_mutate_rate}
-    weight_replace_rate     = {weight_replace_rate}
+# connection weight options
+weight_init_mean        = {weight_init_mean}
+weight_init_stdev       = {weight_init_stdev}
+weight_max_value        = {weight_max_value}
+weight_min_value        = {weight_min_value}
+weight_mutate_power     = {weight_mutate_power}
+weight_mutate_rate      = {weight_mutate_rate}
+weight_replace_rate     = {weight_replace_rate}
 
-    [DefaultSpeciesSet]
-    compatibility_threshold = {compatibility_threshold}
+[DefaultSpeciesSet]
+compatibility_threshold = {compatibility_threshold}
 
-    [DefaultStagnation]
-    species_fitness_func =  max
-    max_stagnation       =  {max_stagnation}
-    species_elitism      = {species_elitism}
+[DefaultStagnation]
+species_fitness_func =  max
+max_stagnation       =  {max_stagnation}
+species_elitism      = {species_elitism}
 
-    [DefaultReproduction]
-    elitism            = {elitism}
-    survival_threshold = {survival_threshold}
+[DefaultReproduction]
+elitism            = {elitism}
+survival_threshold = {survival_threshold}
     """
 
 def import_template():
