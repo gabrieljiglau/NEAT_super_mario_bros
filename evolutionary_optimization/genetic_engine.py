@@ -1,7 +1,7 @@
 from typing import List, Dict
-from src.building_blocks import Solution, IndividualSolution
-from src.environment_interaction import run_mario
-from src.utils import Randomizer, get_bit_num
+from evolutionary_optimization.building_blocks import Solution, IndividualSolution
+from evolutionary_optimization.environment_interaction import run_mario
+from evolutionary_optimization.utils import Randomizer, get_bit_num
 
 
 def select_elite(solution_list: List[IndividualSolution], number_of_elites:int):
@@ -89,7 +89,7 @@ class MetaGeneticAlgorithm:
         else:
             self.current_generation = current_generation
 
-    def optimize_network_hyperparameters(self, max_generations=350, NEAT_iterations=50):
+    def optimize_network_hyperparameters(self, max_generations=350, NEAT_generations=50):
 
         generation_number = 1
         best_score_all_time = float('-inf')
@@ -112,7 +112,7 @@ class MetaGeneticAlgorithm:
             for candidate in self.current_generation.solution_list:
 
                 config_path = candidate.config_path
-                fitness = run_mario(config_path, NEAT_iterations)
+                fitness = run_mario(config_path, NEAT_generations)
                 candidate.fitness = fitness
 
                 if fitness > best_score_this_generation:
@@ -202,4 +202,13 @@ class MetaGeneticAlgorithm:
 
 
 if __name__ == '__main__':
-    pass
+
+    population_size = 10
+    cx_rate = 0.8
+    cx_points = 30
+    mutate_rate_discrete = 0.004
+    mutate_rate_continuous = 0.006
+
+    meta_genetic_algorithm = MetaGeneticAlgorithm(population_size, cx_rate, cx_points,
+                                                  mutate_rate_discrete, mutate_rate_continuous)
+    meta_genetic_algorithm.optimize_network_hyperparameters(10, 20)

@@ -139,6 +139,8 @@ def decode_discrete(bitstring: str, lower: int, upper:int, possible_values: list
     return the item at a given index from the input list
     """
 
+
+
     value = int(bitstring, 2)
     target = upper - lower
     max_value = (1 << len(bitstring)) - 1
@@ -257,12 +259,14 @@ if __name__ == '__main__':
     precision_p = 5
 
     generated_bitstring = generate_bitstring(lower_bound, upper_bound, precision_p)
+    decoded_bitstring = decode_continuous(generated_bitstring, lower_bound, upper_bound, precision_p)
+    print(f"generated_bitstring = {generated_bitstring}")
+    print(f"decoded_bitstring = {decoded_bitstring}")
 
-    mutated_bistring = add_possible_mutation(generated_bitstring, 0.15)
+    # mutated_bistring = add_possible_mutation(generated_bitstring, 0.15)
 
     values = ["ala", "bala", "portocala", "cine", "mi-a", "mancat", "banana"]
     original_num = decode_discrete(generated_bitstring, lower_bound, upper_bound, values)
-    mutated_num = decode_discrete(mutated_bistring, lower_bound, upper_bound, values)
+    # mutated_num = decode_discrete(mutated_bistring, lower_bound, upper_bound, values)
 
     print(f"Generated bitstring: {generated_bitstring} of the value {original_num}")
-    print(f"Mutated bitstring: {mutated_bistring} of the value {mutated_num}")

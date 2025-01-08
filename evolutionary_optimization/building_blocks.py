@@ -1,18 +1,30 @@
 import os.path
 from typing import List
-from src.utils import generate_bitstring, decode_discrete, decode_continuous, \
+from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
 
+# DA, nu stiu ce sa zic de asta
 
+# TODO: add 'partial_nodirect #
+#   As for full_nodirect, but each connection has a probability of being present
+#  determined by the number (valid values are in [0.0, 1.0])'.
+
+# TODO: add partial_direct #
+#  - as for full_direct, but each connection has a probability of being present
+#  determined by the number (valid values are in [0.0, 1.0]).'
+
+# TODO: make define_parameters also return the decoded parameters(i.e their actual value,
+#  not their bitstring representation)
 def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
+
     parameters = []
 
     """
     add each hyperparameter that will be used in NEAT to the final parameters list
-    :return: the list that contains all the hyperparameters
+    :return: two separate lists that contains i) all the encoded hyperparameters and ii) all the decoded parameters
     """
 
-    pop_size_values = [i for i in range(5, 100)]
+    pop_size_values = [i for i in range(5, 101)]
     pop_size = DiscreteParameter(5, 100, mutate_rate_discrete, pop_size_values, precision)
     parameters.append(pop_size)
 
@@ -26,41 +38,53 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
 
     activation_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(activation_mutate_rate)
+
     activation_options = DiscreteParameter(0, 6, mutate_rate_discrete, activation_values, precision)
     parameters.append(activation_options)
+
     aggregation_values = ["min", "max", "sum", "product", "median", "mean"]
     aggregation_default = DiscreteParameter(0, 5, mutate_rate_discrete, aggregation_values, precision)
     parameters.append(aggregation_default)
+
     aggregation_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(aggregation_mutate_rate)
 
     bias_init_mean = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(bias_init_mean)
+
     bias_init_stddev = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
     parameters.append(bias_init_stddev)
+
     bias_max_value = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
     parameters.append(bias_max_value)
+
     bias_min_value = ContinuousParameter(-3, 0, mutate_rate_continuous, precision)
     parameters.append(bias_min_value)
+
     bias_mutate_power = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
     parameters.append(bias_mutate_power)
+
     bias_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(bias_mutate_rate)
+
     bias_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(bias_replace_rate)
 
     compatibility_disjoint_coefficient = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
     parameters.append(compatibility_disjoint_coefficient)
+
     compatibility_weight_coefficient = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
     parameters.append(compatibility_weight_coefficient)
 
     conn_add_prob = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(conn_add_prob)
+
     conn_delete_prob = ContinuousParameter(0, 1, mutate_rate_continuous, 1)
     parameters.append(conn_delete_prob)
 
     enabled_default = DiscreteParameter(0, 1, mutate_rate_discrete, boolean_values, precision)
     parameters.append(enabled_default)
+
     enabled_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(enabled_mutate_rate)
 
@@ -70,6 +94,7 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
 
     node_add_prob = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(node_add_prob)
+
     node_delete_prob = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(node_delete_prob)
 
@@ -79,32 +104,43 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
 
     response_init_mean = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
     parameters.append(response_init_mean)
+
     response_init_stddev = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
     parameters.append(response_init_stddev)
 
     response_max_value = ContinuousParameter(0, 30, mutate_rate_continuous, precision)
     parameters.append(response_max_value)
+
     response_min_value = ContinuousParameter(-30, 0, mutate_rate_continuous, precision)
     parameters.append(response_min_value)
+
     response_mutate_power = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
     parameters.append(response_mutate_power)
+
     response_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(response_mutate_rate)
+
     response_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(response_replace_rate)
 
     weight_init_mean = ContinuousParameter(-1, 1, mutate_rate_continuous, precision)
     parameters.append(weight_init_mean)
+
     weight_init_stddev = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_init_stddev)
-    weight_max_value = ContinuousParameter(0, 10, mutate_rate_continuous, precision)
+
+    weight_max_value = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
     parameters.append(weight_max_value)
-    weight_min_value = ContinuousParameter(-10, 0, mutate_rate_continuous, precision)
+
+    weight_min_value = ContinuousParameter(-3, 0, mutate_rate_continuous, precision)
     parameters.append(weight_min_value)
+
     weight_mutate_power = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_mutate_power)
+
     weight_mutate_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_mutate_rate)
+
     weight_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_replace_rate)
 
@@ -113,15 +149,30 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
 
     max_stagnation = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
     parameters.append(max_stagnation)
+
     species_elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
     parameters.append(species_elitism)
 
     elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
     parameters.append(elitism)
+
     survival_threshold = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(survival_threshold)
 
     return parameters
+
+"""
+decoded parameters should be returned after the initialization of the encoded parameters has taken place
+"""
+def decode_parameters(encoded_parameters):
+    decoded_parameters = []
+    for param in encoded_parameters:
+        if param.is_continuous:
+            decoded_parameters.append(param.decode_continuous())
+        else:
+            decoded_parameters.append(param.decode_discrete())
+
+    return decoded_parameters
 
 
 class ContinuousParameter:
@@ -137,12 +188,18 @@ class ContinuousParameter:
         self.is_continuous = True
 
     def initialize_randomly(self):
-        return generate_bitstring(self.lower_bound, self.upper_bound, self.precision)
+        self.bitstring = generate_bitstring(self.lower_bound, self.upper_bound, self.precision)
+        self.bit_length = len(self.bitstring)
+        return self.bitstring
+
+    def decode_continuous(self):
+        self.actual_value = decode_continuous(self.bitstring, self.lower_bound, self.upper_bound, self.precision)
+        return self.actual_value
 
 
 class DiscreteParameter(ContinuousParameter):
 
-    def __init__(self, lower_bound: float, upper_bound: float, mutation_rate: float, values: list, precision=5):
+    def __init__(self, lower_bound: int, upper_bound: int, mutation_rate: float, values: list, precision=5):
         super().__init__(lower_bound, upper_bound, mutation_rate, precision)
         self.values = values
         self.num_values = len(values)
@@ -153,6 +210,12 @@ class DiscreteParameter(ContinuousParameter):
     def initialize_randomly(self):
         return super().initialize_randomly()
 
+    def decode_continuous(self):
+        raise AttributeError("decode_continuous is not available for DiscreteParameter")
+
+    def decode_discrete(self):
+        self.actual_value = decode_discrete(self.bitstring, int(self.lower_bound), int(self.upper_bound), self.values)
+        return self.actual_value
 
 class IndividualSolution:
     """
@@ -165,7 +228,8 @@ class IndividualSolution:
     e.g. config1 for the first ever individual, config68 for the 68th individual ever created etc.
     """
 
-    def __init__(self, big_bitstring=None, config_path=None):
+    def __init__(self, big_bitstring=None, config_path=None, mutate_continuous=None, mutate_discrete=None,
+                 precision=5):
 
         IndividualSolution.individual_id += 1
 
@@ -173,11 +237,12 @@ class IndividualSolution:
             self.big_bitstring = ""
         else:
             self.big_bitstring = big_bitstring
+
         self.decoded_parameters = []
+        self.parameters = define_parameters(mutate_discrete, mutate_continuous, precision)
         """
         there should be an explicit decoding of the parameters -> after crossover
         """
-        self.parameters = []
 
         if config_path is None:
             self.config_path = self.create_config()
@@ -198,6 +263,7 @@ class IndividualSolution:
 
         file_path = f"config{self.individual_id}"
         self.config_path = file_path
+
         config_string = build_config(template, self.decoded_parameters, self.config_path)
 
         try:
@@ -220,16 +286,17 @@ class IndividualSolution:
 
         final_bitstring = []
         self.parameters = define_parameters(mutate_discrete, mutate_continuous, precision)
+        print(f"decoded_parameters = {self.decoded_parameters}")
 
         for param in self.parameters:
-            bitstring = generate_bitstring(param.lower_bound, param.upper_bound, param.precision)
+            bitstring = param.initialize_randomly()
 
             if not bitstring:
                 raise ValueError(f"Generated an empty bitstring for parameter: {param}")
 
-            param.bitstring = bitstring
             final_bitstring.append(bitstring)
 
+        self.decoded_parameters = decode_parameters(encoded_parameters=self.parameters)
         self.big_bitstring = ''.join(final_bitstring)
 
     @classmethod
@@ -284,6 +351,7 @@ class IndividualSolution:
             bit_count = get_bit_num(param.lower_bound, param.upper_bound, param.precision)
             param_bitstring = self.big_bitstring[current_index:current_index + bit_count]
 
+            # s-ar putea sa fie o problema aici, caci decode_discrete are parametrii de lower si upper bound int-uri !!
             if not param.is_continuous:
                 param.actual_value = decode_discrete(param_bitstring, param.lower_bound,
                                                      param.upper_bound, param.values)
@@ -320,13 +388,15 @@ class Solution:
             individual.set_initial_solution(mutate_discrete, mutate_continuous, precision)
             new_generation.append(individual)
 
+        print(f"new_generation = {new_generation}")
         return cls(new_generation)
 
 
 if __name__ == '__main__':
+
     solution = IndividualSolution()
     solution.set_initial_solution(0.08, 0.07, 5)
     print(f"Decoded solution: {solution.decode_individual_solution()}")
 
-    solution.mutate_individual_solution(0.42, 0.57)
+    IndividualSolution.mutate_individual_solution(solution, 0.42, 0.57)
     print(f"Decoded solution: {solution.decode_individual_solution()}")
