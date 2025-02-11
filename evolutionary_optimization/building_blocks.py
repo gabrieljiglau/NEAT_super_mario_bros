@@ -3,29 +3,16 @@ from typing import List
 from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
 
-# DA, nu stiu ce sa zic de asta
-
-# TODO: add 'partial_nodirect #
-#   As for full_nodirect, but each connection has a probability of being present
-#  determined by the number (valid values are in [0.0, 1.0])'.
-
-# TODO: add partial_direct #
-#  - as for full_direct, but each connection has a probability of being present
-#  determined by the number (valid values are in [0.0, 1.0]).'
-
-# TODO: make define_parameters also return the decoded parameters(i.e their actual value,
-#  not their bitstring representation)
-def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
-
+def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
     parameters = []
 
     """
     add each hyperparameter that will be used in NEAT to the final parameters list
-    :return: two separate lists that contains i) all the encoded hyperparameters and ii) all the decoded parameters
+    :return: the list containing all the encoded hyperparameters
     """
 
-    pop_size_values = [i for i in range(5, 101)]
-    pop_size = DiscreteParameter(5, 100, mutate_rate_discrete, pop_size_values, precision)
+    pop_size_values = [i for i in range(10, 20)]
+    pop_size = DiscreteParameter(10, 20, mutate_rate_discrete, pop_size_values, precision)
     parameters.append(pop_size)
 
     boolean_values = [False, True]
@@ -144,10 +131,10 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
     weight_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_replace_rate)
 
-    compatibility_threshold = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
+    compatibility_threshold = DiscreteParameter(10, 20, mutate_rate_discrete, [i for i in range(10, 20)], precision)
     parameters.append(compatibility_threshold)
 
-    max_stagnation = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
+    max_stagnation = DiscreteParameter(1, 15, mutate_rate_discrete, [i for i in range(1, 15)], precision)
     parameters.append(max_stagnation)
 
     species_elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
@@ -159,7 +146,17 @@ def define_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
     survival_threshold = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(survival_threshold)
 
+    final_bitstring = []
+    for param in parameters:
+        bitstring = param.initialize_randomly()
+
+        if not bitstring:
+            raise ValueError(f"Generated an empty bitstring for parameter: {param}")
+
+        final_bitstring.append(bitstring)
+
     return parameters
+
 
 """
 decoded parameters should be returned after the initialization of the encoded parameters has taken place
@@ -217,6 +214,7 @@ class DiscreteParameter(ContinuousParameter):
         self.actual_value = decode_discrete(self.bitstring, int(self.lower_bound), int(self.upper_bound), self.values)
         return self.actual_value
 
+
 class IndividualSolution:
     """
     the class holds the appropriate parameters and methods needed for one single individual
@@ -238,8 +236,8 @@ class IndividualSolution:
         else:
             self.big_bitstring = big_bitstring
 
-        self.decoded_parameters = []
-        self.parameters = define_parameters(mutate_discrete, mutate_continuous, precision)
+        self.parameters = define_and_initialize_parameters(mutate_discrete, mutate_continuous, precision)
+        self.decoded_parameters = decode_parameters(self.parameters)
         """
         there should be an explicit decoding of the parameters -> after crossover
         """
@@ -261,10 +259,17 @@ class IndividualSolution:
 
         template = import_template()
 
-        file_path = f"config{self.individual_id}"
+        current_dir = os.path.dirname(__file__)
+        parent_dir = os.path.dirname(current_dir)
+        base_dir = os.path.join(parent_dir, 'configs')
+        os.makedirs(base_dir, exist_ok=True)
+        file_name = f"config{self.individual_id}"
+        file_path = os.path.join(base_dir, file_name)
         self.config_path = file_path
 
         config_string = build_config(template, self.decoded_parameters, self.config_path)
+
+        # print(f"config_string = {config_string}")
 
         try:
             with open(file_path, 'w') as f:
@@ -285,14 +290,13 @@ class IndividualSolution:
     def set_initial_solution(self, mutate_discrete: float, mutate_continuous: float, precision: int):
 
         final_bitstring = []
-        self.parameters = define_parameters(mutate_discrete, mutate_continuous, precision)
-        print(f"decoded_parameters = {self.decoded_parameters}")
+        self.parameters = define_and_initialize_parameters(mutate_discrete, mutate_continuous, precision)
 
         for param in self.parameters:
-            bitstring = param.initialize_randomly()
+            bitstring = param.bitstring
 
             if not bitstring:
-                raise ValueError(f"Generated an empty bitstring for parameter: {param}")
+                raise ValueError(f"Empty bitstring found for parameter: {param}")
 
             final_bitstring.append(bitstring)
 
@@ -351,10 +355,9 @@ class IndividualSolution:
             bit_count = get_bit_num(param.lower_bound, param.upper_bound, param.precision)
             param_bitstring = self.big_bitstring[current_index:current_index + bit_count]
 
-            # s-ar putea sa fie o problema aici, caci decode_discrete are parametrii de lower si upper bound int-uri !!
             if not param.is_continuous:
-                param.actual_value = decode_discrete(param_bitstring, param.lower_bound,
-                                                     param.upper_bound, param.values)
+                param.actual_value = decode_discrete(param_bitstring, int(param.lower_bound),
+                                                     int(param.upper_bound), param.values)
             elif param.is_continuous:
                 param.actual_value = decode_continuous(param_bitstring, param.lower_bound,
                                                        param.upper_bound, param.precision)
@@ -388,12 +391,10 @@ class Solution:
             individual.set_initial_solution(mutate_discrete, mutate_continuous, precision)
             new_generation.append(individual)
 
-        print(f"new_generation = {new_generation}")
         return cls(new_generation)
 
 
 if __name__ == '__main__':
-
     solution = IndividualSolution()
     solution.set_initial_solution(0.08, 0.07, 5)
     print(f"Decoded solution: {solution.decode_individual_solution()}")

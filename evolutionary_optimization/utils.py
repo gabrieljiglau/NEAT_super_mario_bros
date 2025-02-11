@@ -50,7 +50,7 @@ node_delete_prob        = {node_delete_prob}
 # network parameters
 num_hidden              = {num_hidden}
 num_inputs              = 960
-num_outputs             = 7
+num_outputs             = 5
 
 # node response options
 response_init_mean      = {response_init_mean}
@@ -138,8 +138,6 @@ def decode_discrete(bitstring: str, lower: int, upper:int, possible_values: list
     """
     return the item at a given index from the input list
     """
-
-
 
     value = int(bitstring, 2)
     target = upper - lower
@@ -244,12 +242,20 @@ def build_config(template, decoded_parameters, filename):
     }
 
     try:
-        with open(filename, "w") as f:
-            f.write(template.format(**params_map))
-    except IOError:
-        print(f"IOError occurred when writing formatted config to {filename}")
+        formatted_config = template.format(**params_map)
+        print(f"Formatted configuration: {formatted_config}")  # Debugging output
+    except KeyError as e:
+        print(f"KeyError: Missing key in params_map - {e}")
+        return None
 
-    return filename
+    try:
+        with open(filename, "w") as f:
+            f.write(formatted_config)
+        # print(f"Configuration written to {filename}")
+    except IOError as e:
+        print(f"IOError occurred when writing formatted config to {filename}: {e}")
+
+    return formatted_config
 
 
 if __name__ == '__main__':
