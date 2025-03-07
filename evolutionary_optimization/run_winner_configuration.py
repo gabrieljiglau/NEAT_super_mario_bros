@@ -5,12 +5,18 @@ import neat
 import numpy as np
 import warnings; warnings.warn = lambda *args,**kwargs: None
 import gym_super_mario_bros
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, RIGHT_ONLY
 from nes_py.wrappers import JoypadSpace
 
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
-env = JoypadSpace(env, SIMPLE_MOVEMENT)
+env = JoypadSpace(env, RIGHT_ONLY)
 
+def softmax(x, temp=1.0):
+    """computes softmax values for each output"""
+    x = np.array(x)
+    x = x / temp
+    exp_x = np.exp(x - np.max(x))
+    return exp_x / np.sum(exp_x)
 
 def preprocess(ob, inx, iny):
     ob = cv2.resize(ob, (inx, iny))
@@ -18,8 +24,8 @@ def preprocess(ob, inx, iny):
     ob = np.reshape(ob, (inx, iny))
     return ob
 
-def run_neat():
-    with open("../models/winner_gen_200_second.pkl", 'rb') as f:
+def run_neat(skip_frames=4):
+    with open("../models/final_winner.pkl", 'rb') as f:
         c = pickle.load(f)
 
     print('Loaded genome:')
@@ -40,10 +46,18 @@ def run_neat():
     observation = env.reset()
 
     done = False
+
+    distance_travelled = 0
+    total_reward = 0
+    frame = 0
+    action_index = 0
+
     while not done:
         env.render()
 
+        frame += 1
         processed_ob = preprocess(observation, inx, iny)
+        print(f"processed observation = {processed_ob}")
         image_array = processed_ob.flatten()
 
         """
@@ -55,9 +69,31 @@ def run_neat():
         int_output = int_output % num_actions
         """
 
-        network_output = neural_network.activate(image_array)
-        action_index = np.argmax(network_output)
-        observation, reward, done, info = env.step(action_index)
+        if frame % skip_frames == 0:
+            network_output = neural_network.activate(image_array)
+            action_probs = softmax(network_output, 1)
+            action_index = np.random.choice(len(action_probs), p=action_probs)
+        # print(f"info = {info}")
+
+        total_reward = 0
+        for _ in range(skip_frames):
+            observation, reward, done, info = env.step(action_index)
+            total_reward += reward
+
+            if done:  # episode might end early
+                break
+
+        rew = reward if not isinstance(reward, np.generic) else reward.item()
+        # print(f"reward = {rew}")
+
+        x_pos = info.get('x_pos', 0)
+        # print(f"x_pos = {x_pos}")
+
+        distance_travelled = x_pos
+        total_reward += rew
+
+    print(f"distance_travelled = {distance_travelled}")
+    print(f"total_reward = {total_reward}")
 
 
 if __name__ == '__main__':

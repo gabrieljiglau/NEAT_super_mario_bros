@@ -99,6 +99,18 @@ class Randomizer:
     def next_double():
         return random.uniform(0.0, 1.0)
 
+def get_hamming_neighbours(current_solution, num_samples):
+
+    """
+    :param num_samples: the number of neighbours bitstring that will be found in the return List
+    :param current_solution: the surrounding candidate we search around for an improvement
+    :return: a big_bitstring (a list), where at each index contains a neighbour of distance 1 from the current bitstring
+    """
+
+
+
+    pass
+
 
 def generate_bitstring(lower: float, upper: float, precision: int):
 
@@ -156,7 +168,6 @@ def decode_discrete(bitstring: str, lower: int, upper:int, possible_values: list
         return possible_values[floor]
     else:
         return possible_values[ceiling]
-
 
 def add_possible_mutation(input_bistring: str, mutation_rate: float):
 

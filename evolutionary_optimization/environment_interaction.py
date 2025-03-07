@@ -1,4 +1,5 @@
 import os
+import time
 import cv2
 import neat
 import pickle
@@ -21,23 +22,22 @@ frame_stack = deque(maxlen=STACK_SIZE)
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 env = JoypadSpace(env, RIGHT_ONLY)
 
+success = 0
 generation = 0
 temperature = 1
 
 best_individual_fitness = float('-inf')
 best_individual_stats = {"distance": 0, "time": 0, "fitness": 0}
 
-
 def softmax(x, temp=1.0):
-    """computes softmax values for each output"""
     x = np.array(x)
     x = x / temp
     exp_x = np.exp(x - np.max(x))
     return exp_x / np.sum(exp_x)
 
-def eval_genome(genome, config, skip_frames=4):
-    """evaluates a single genome in NEAT."""
-    global generation, best_individual_fitness, best_individual_stats
+def eval_genome(genome, config, skip_frames=4, STACK_SIZE=4):
+    """Evaluates a single genome in NEAT with stacked frames."""
+    global generation, best_individual_fitness, best_individual_stats, success
 
     observation = env.reset()
     neural_network = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -55,29 +55,27 @@ def eval_genome(genome, config, skip_frames=4):
     done = False
     action_index = 0
 
-    """
+    # Fill the frame stack with the first preprocessed frame
+    preprocessed_frame = preprocess(observation, width, height) / 255.0  # Normalize
     for _ in range(STACK_SIZE):
         frame_stack.append(preprocessed_frame)
-    """
 
     while not done:
-
         frame += 1
 
-        observation = preprocess(observation, width, height)
-        observation = observation / 255.0  # normalize to range [0,1]
-        image_array = observation.flatten()
+        # Preprocess the observation
+        preprocessed_frame = preprocess(observation, width, height) / 255.0  # Normalize
+        frame_stack.append(preprocessed_frame)  # Automatically removes the oldest frame when full
 
-        """
-        frame_stack.append(observation)
-
+        # Ensure we only start once we have a full stack
         if len(frame_stack) < STACK_SIZE:
             continue
 
+        # Stack the frames along the depth dimension and flatten
         stacked_observation = np.stack(frame_stack, axis=0)
         image_array = stacked_observation.flatten()
-        """
 
+        # Perform action selection every `skip_frames` steps
         if frame % skip_frames == 0:
             network_output = neural_network.activate(image_array)
             action_probs = softmax(network_output, temperature)
@@ -87,8 +85,7 @@ def eval_genome(genome, config, skip_frames=4):
         for _ in range(skip_frames):
             observation, reward, done, info = env.step(action_index)
             total_reward += reward
-
-            if done:  # episode might end early
+            if done:  # Episode might end early
                 break
 
         rew = total_reward if not isinstance(total_reward, np.generic) else total_reward.item()
@@ -99,11 +96,6 @@ def eval_genome(genome, config, skip_frames=4):
 
         speed = current_x - genome.prev_x
         genome.prev_x = current_x
-
-        """
-        fitness_bonus = max(current_x ** 1.8 - info.get('time') ** 1.5 +
-                            min(max(current_x-50, 0), 1) * 2500 + success * 1e6, 0.00001) * 1e-6
-        """
 
         fitness_bonus = (current_x * (speed ** 2) * 1e-4) if speed > 0 else -0.1
         genome.fitness += rew + fitness_bonus
@@ -123,12 +115,18 @@ def eval_genome(genome, config, skip_frames=4):
 
         distance_traveled = current_x
         if info.get('flag_get', False):  # Success if the flag is reached
-            success = True
+            genome.fitness += 10000
             done = True
+            success += 1
 
         life = info.get('life', 0)
         if (life < 2 and genome.fitness < 1500) or counter == 150:
             done = True
+
+    if generation % 5 == 0:
+        with open('training_statistics.txt', 'a') as file:
+            file.write(f"Now in generation {generation}; best_fintess {best_fitness}; best_distance {xpos_max}; "
+                       f"success = {success}")
 
     if genome.fitness > best_individual_fitness:
         best_individual_fitness = genome.fitness
@@ -137,7 +135,6 @@ def eval_genome(genome, config, skip_frames=4):
             "time": frame,
             "fitness": genome.fitness,
         }
-        print(best_individual_stats)
 
     return genome.fitness  # Only return fitness
 
@@ -155,14 +152,15 @@ def print_info(gene_id: int, gene_fitness: float, info: dict) -> None:
     print('FITNESS + SCORE: ', gene_fitness)
 
 
-def run_mario(config_file, total_iterations, in_ga=False):
+def run_mario(config_file, total_iterations, optimizing=False):
     num_cores = multiprocessing.cpu_count() - 1
 
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                          neat.DefaultStagnation, config_file)
     population = neat.Population(config)
 
-    population.add_reporter(neat.StdOutReporter(True))
+    if not optimizing:
+        population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
@@ -171,17 +169,32 @@ def run_mario(config_file, total_iterations, in_ga=False):
     # parallel evaluation is already implemented in NEAT via ParallelEvaluator
     parallel_evaluator = neat.ParallelEvaluator(num_cores, eval_genome)
 
-    # Run the population for total_iterations generations, without the manual loop
-    population.run(parallel_evaluator.evaluate, total_iterations)
+    best_fitness_so_far = None
+    best_genome_so_far = None
 
-    # Process results after all generations have run
-    winner = stats.best_genomes(1)[0]
+    for gen in range(total_iterations):
+        start_time = time.time()
 
-    if not in_ga:
-        with open('../models/final_winner.pkl', 'wb') as output:
-            pickle.dump(winner, output, 1)
+        population.run(parallel_evaluator.evaluate, 1)  # run for one generation at a time
 
-    return winner.fitness
+        elapsed_time = time.time() - start_time
+
+        current_best = stats.best_genomes(1)[0]
+
+        if best_fitness_so_far is None or current_best.fitness > best_fitness_so_far:
+            best_fitness_so_far = current_best.fitness
+            best_genome_so_far = current_best
+
+        if elapsed_time > 300:
+            print("Timeout reached (300s)! Returning best fitness so far.")
+            break
+
+    if not optimizing and best_genome_so_far:
+        with open('../models/winner_config75.pkl', 'wb') as output:
+            pickle.dump(best_genome_so_far, output, 1)
+            print(f"success rate = {float(success/total_iterations)}")
+
+    return best_fitness_so_far if best_genome_so_far else None
 
 def save_winner(genome, generation_number):
     """Save the winner genome to a file."""
@@ -199,8 +212,8 @@ if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
     base_dir = os.path.join(parent_dir, 'configs')
-    file_name = 'config5'
+    file_name = 'config75'
     file_path = os.path.join(base_dir, file_name)
 
-    MAX_GENERATION_COUNT = 10
-    print(f"max fitness = {run_mario(new_config, MAX_GENERATION_COUNT)}")
+    MAX_GENERATION_COUNT = 100
+    print(f"max fitness = {run_mario(file_path, MAX_GENERATION_COUNT)}")

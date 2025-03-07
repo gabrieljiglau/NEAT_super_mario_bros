@@ -1,83 +1,106 @@
-
 === Statistics for Generation 20 ===
-Mean Distance: 440.20
-Mean Fitness: 580.19
-Mean Time: 309.30
-Best Individual - Distance: 722, Time: 338, Fitness: 951.6700000000003
+Mean Distance: 314.30
+Mean Fitness: 557.05
+Mean Time: 228.40
+Best Individual - Distance: 898, Time: 834, Fitness: 2181.9790000000344
+
 
 === Statistics for Generation 40 ===
-Mean Distance: 288.20
-Mean Fitness: 363.70
-Mean Time: 249.70
-Best Individual - Distance: 898, Time: 692, Fitness: 1318.3000000000015
+Mean Distance: 348.70
+Mean Fitness: 666.29
+Mean Time: 238.33
+Best Individual - Distance: 1417, Time: 518, Fitness: 4803.979999999997
 
-=== Statistics for Generation 60 ===
-Mean Distance: 348.80
-Mean Fitness: 467.96
-Mean Time: 299.80
-Best Individual - Distance: 898, Time: 692, Fitness: 1318.3000000000015
+=== Statistics for Generation 20 ===
+Mean Distance: 313.60
+Mean Fitness: 695.74
+Mean Time: 204.60
+Best Individual - Distance: 1960, Time: 810, Fitness: 8078.515999999982
 
 === Statistics for Generation 80 ===
-Mean Distance: 422.30
-Mean Fitness: 582.57
-Mean Time: 347.80
-Best Individual - Distance: 898, Time: 732, Fitness: 1345.0800000000017
+Mean Distance: 434.70
+Mean Fitness: 1204.25
+Mean Time: 269.83
+Best Individual - Distance: 2182, Time: 1102, Fitness: 9692.265000000072
 
-=== Statistics for Generation 100 ===
-Mean Distance: 422.60
-Mean Fitness: 593.70
-Mean Time: 366.30
-Best Individual - Distance: 898, Time: 805, Fitness: 1351.1000000000008
 
-Success rate: 0.00
-Current generation: 101 
-Success rate: 0.00
-Current generation: 102 
-Success rate: 0.00
-Current generation: 104 
-Success rate: 0.00
-Current generation: 105 
-Success rate: 0.00
-Current generation: 106 
-Success rate: 0.00
-Current generation: 107 
-Success rate: 0.00
-Current generation: 108 
-Success rate: 0.00
-Current generation: 109 
-Success rate: 0.00
-Current generation: 110 
-Success rate: 0.00
-Current generation: 111 
-Success rate: 0.00
-Current generation: 112 
-Success rate: 0.00
-Current generation: 113 
-Success rate: 0.00
-Current generation: 114 
-Success rate: 0.00
-Current generation: 115 
-Success rate: 0.00
-Current generation: 116 
-Success rate: 0.00
-Current generation: 117 
-Success rate: 0.00
-Current generation: 118 
-Success rate: 0.00
-Current generation: 119 
-Success rate: 0.00
-Current generation: 120 
+=== Statistics for Generation 300 ===
+Mean Distance: 366.40
+Mean Fitness: 1008.56
+Mean Time: 247.17
+Best Individual - Distance: 2226, Time: 1019, Fitness: 10011.054999999946
+
+=== Statistics for Generation 20 ===
+Mean Distance: 263.53
+Mean Fitness: 319.34
+Mean Time: 222.93
+Best Individual - Distance: 704, Time: 412, Fitness: 1017.0068299999997
+
+=== Statistics for Generation 40 ===
+Mean Distance: 386.93
+Mean Fitness: 497.54
+Mean Time: 282.07
+Best Individual - Distance: 1420, Time: 938, Fitness: 2124.500513000007
+
+=== Statistics for Generation 80 ===
+Mean Distance: 358.07
+Mean Fitness: 441.48
+Mean Time: 263.87
+Best Individual - Distance: 2146, Time: 1171, Fitness: 2800.6060650000018
+
 
 === Statistics for Generation 120 ===
-Mean Distance: 229.20
-Mean Fitness: 295.06
-Mean Time: 275.40
-Best Individual - Distance: 898, Time: 805, Fitness: 1351.1000000000008
+Mean Distance: 382.60
+Mean Fitness: 482.38
+Mean Time: 259.23
+Best Individual - Distance: 2146, Time: 1171, Fitness: 2800.6060650000018
 
-Success rate: 0.00
-Current generation: 121 
-Success rate: 0.00
-Current generation: 122 
-Success rate: 0.00
-Current generation: 123 
-Current generation: 1 
+=== Statistics for Generation 160 ===
+Mean Distance: 434.53
+Mean Fitness: 558.99
+Mean Time: 252.63
+Best Individual - Distance: 2019, Time: 1094, Fitness: 2861.9989450000016
+
+=== Statistics for Generation 20 ===
+Mean Distance: 285.75
+Mean Fitness: 474.30
+Mean Time: 188.05
+Best Individual - Distance: 898, Time: 501, Fitness: 2269.5789999999897
+
+
+=== Statistics for Generation 40 ===
+Mean Distance: 308.60
+Mean Fitness: 553.08
+Mean Time: 201.00
+Best Individual - Distance: 1414, Time: 697, Fitness: 4450.629999999998
+
+=== Statistics for Generation 120 ===
+Mean Distance: 348.20
+Mean Fitness: 635.50
+Mean Time: 203.78
+Best Individual - Distance: 1523, Time: 796, Fitness: 5007.305000000011
+
+=== Statistics for Generation 20 ===
+Mean Distance: 330.33
+Mean Fitness: 588.89
+Mean Time: 216.03
+Best Individual - Distance: 898, Time: 536, Fitness: 2216.558000000014
+
+=== Statistics for Generation 40 ===
+Mean Distance: 384.87
+Mean Fitness: 818.43
+Mean Time: 181.20
+Best Individual - Distance: 2024, Time: 938, Fitness: 8496.932000000019
+
+=== Statistics for Generation 60 ===
+Mean Distance: 408.03
+Mean Fitness: 883.70
+Mean Time: 214.37
+Best Individual - Distance: 2024, Time: 938, Fitness: 8496.932000000019
+
+
+=== Statistics for Generation 80 ===
+Mean Distance: 417.90
+Mean Fitness: 917.00
+Mean Time: 235.97
+Best Individual - Distance: 2024, Time: 938, Fitness: 8496.932000000019

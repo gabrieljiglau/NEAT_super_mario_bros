@@ -1,0 +1,79 @@
+[NEAT]
+fitness_criterion     = max
+fitness_threshold     = 100000
+pop_size              = 79
+reset_on_extinction   = False
+
+[DefaultGenome]
+# node activation options
+activation_default      = gauss
+activation_mutate_rate  = 0.91413
+activation_options      = log
+
+# node aggregation options
+aggregation_default     = min
+aggregation_mutate_rate = 0.13781
+aggregation_options     = sum
+
+# node bias options
+bias_init_mean          = 0.27605
+bias_init_stdev         = 1.53974
+bias_max_value          = 0.30274
+bias_min_value          = -2.2243
+bias_mutate_power       = 1.31723
+bias_mutate_rate        = 0.47568
+bias_replace_rate       = 0.127
+
+# genome compatibility options
+compatibility_disjoint_coefficient = 2.95198
+compatibility_weight_coefficient   = 4.13436
+
+# connection add/remove rates
+conn_add_prob           = 0.87085
+conn_delete_prob        = 0.1
+
+# connection enable options
+enabled_default         = False
+enabled_mutate_rate     = 0.74493
+
+feed_forward            =  True
+initial_connection      = unconnected
+
+# node add/remove rates
+node_add_prob           = 0.32421
+node_delete_prob        = 0.953
+
+# network parameters
+num_hidden              = 7
+num_inputs              = 960
+num_outputs             = 5
+
+# node response options
+response_init_mean      = 4.26734
+response_init_stdev     = 2.26226
+response_max_value      = 6.03262
+response_min_value      = -4.49113
+response_mutate_power   = 2.29461
+response_mutate_rate    = 0.26316
+response_replace_rate   = 0.9058
+
+# connection weight options
+weight_init_mean        = 0.08306
+weight_init_stdev       = 0.23104
+weight_max_value        = 0.01431
+weight_min_value        = -0.96865
+weight_mutate_power     = 0.88876
+weight_mutate_rate      = 0.91211
+weight_replace_rate     = 0.52732
+
+[DefaultSpeciesSet]
+compatibility_threshold = 11
+
+[DefaultStagnation]
+species_fitness_func =  max
+max_stagnation       =  8
+species_elitism      = 4
+
+[DefaultReproduction]
+elitism            = 4
+survival_threshold = 0.75701

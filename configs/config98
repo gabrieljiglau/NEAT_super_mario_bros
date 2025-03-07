@@ -1,3 +1,4 @@
+
 [NEAT]
 fitness_criterion     = max
 fitness_threshold     = 100000
@@ -77,3 +78,4 @@ species_elitism      = 2
 [DefaultReproduction]
 elitism            = 3
 survival_threshold = 0.32014
+    

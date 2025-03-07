@@ -96,17 +96,23 @@ class MetaGeneticAlgorithm:
 
         if os.path.exists(checkpoint_file):
             with open(checkpoint_file, 'rb') as f:
+                print('successfully opened the checkpoint')
                 saved_data = pickle.load(f)
                 self.current_generation = saved_data['current_generation']
                 generation_number = saved_data['generation_number']
                 best_score_all_time = saved_data['best_score_all_time']
                 best_individual = saved_data['best_individual']
+                IndividualSolution.individual_id = saved_data['individual_id']
+                print(f"last_config path = {IndividualSolution.individual_id}")
         else:
             generation_number = 1
             best_score_all_time = float('-inf')
             best_individual = None
 
+        winners_percentage = 0
+        winners = 0
         is_evolving = True
+        total_fitness = 0
         while is_evolving:
 
             print(f"Now running generation number {generation_number}")
@@ -122,15 +128,26 @@ class MetaGeneticAlgorithm:
 
             best_candidate = None
             # the current generation
-            for candidate in self.current_generation.solution_list:
+            index = 1
 
+            print(f"Configs used:")
+            for candidate in self.current_generation.solution_list:
+                print(f"{candidate.config_path}")
+
+            for candidate in self.current_generation.solution_list:
+                print(f"now evaluating candidate: {index}")
                 config_path = candidate.config_path
-                fitness = run_mario(config_path, NEAT_generations)
+                fitness = run_mario(config_path, NEAT_generations, optimizing=True)
+                if fitness > 10000:
+                    winners += 1
+                total_fitness += fitness
                 candidate.fitness = fitness
 
                 if fitness > best_score_this_generation:
                     best_score_this_generation = fitness
                     best_candidate = candidate
+
+                index += 1
 
             if best_score_this_generation > best_score_all_time:
                 best_score_all_time = best_score_this_generation
@@ -139,6 +156,7 @@ class MetaGeneticAlgorithm:
             next_generation = Solution()
             elite_individuals, sorted_population = select_elite(self.current_generation.solution_list,
                                                                 self.number_of_elite)
+            elite_configs = [elite.config_path for elite in elite_individuals]
             next_generation.solution_list.extend(elite_individuals)
             """
             add the elites to the next generation and complete the rest of the population through selection
@@ -159,36 +177,33 @@ class MetaGeneticAlgorithm:
                 child1.big_bitstring = new_bitstring1
                 child2.big_bitstring = new_bitstring2
 
-                """ # old way
-                next_generation.solution_list[index] = child1
-                index += 1
-                next_generation.solution_list[index] = child2
-                """
-
                 next_generation.solution_list.append(child1)
                 next_generation.solution_list.append(child2)
 
             for individual in self.current_generation.solution_list:
-                if not individual.fitness == best_score_this_generation:
+                if individual.config_path not in elite_configs:
                     individual.delete_config()
 
             self.current_generation = next_generation
             print(f"best_evaluation {best_score_all_time} in generation {generation_number}")
 
+            generation_number += 1
+
             try:
-                with open(file_tracker, 'w') as f:
-                    f.write(f"best_evaluation {best_score_all_time} in generation {generation_number}")
+                with open(file_tracker, 'a') as f:
+                    f.write(f"best_evaluation {best_score_all_time} in generation {generation_number}; ")
+                    f.write(f"mean fitness {float(total_fitness/self.pop_size)}; ")
+                    f.write(f"win percentage {float(winners/self.pop_size)} \n")
             except IOError:
                 print(f"Error when trying to write to file {file_tracker}")
 
-            if generation_number % 1 == 0:
-                with open(checkpoint_file, 'wb') as f:
-                    pickle.dump({'current_generation': self.current_generation,
-                                 'generation_number': generation_number,
-                                 'best_score_all_time': best_score_all_time,
-                                 'best_individual': best_individual}, f)
-
-            generation_number += 1
+            print(f"saving generation number {generation_number} to {checkpoint_file}")
+            with open(checkpoint_file, 'wb') as f:
+                pickle.dump({'current_generation': self.current_generation,
+                             'generation_number': generation_number,
+                             'best_score_all_time': best_score_all_time,
+                             'best_individual': best_individual,
+                             'individual_id': IndividualSolution.individual_id}, f)  # Save last used ID
 
         return best_individual.config_path
 
@@ -231,13 +246,25 @@ class MetaGeneticAlgorithm:
 
 
 if __name__ == '__main__':
-    population_size = 50
+    population_size = 30
     cx_rate = 0.8
     cx_points = 30
     mutate_rate_discrete = 0.004
     mutate_rate_continuous = 0.006
 
+    with open('checkpoint.pkl', 'rb') as f:
+        checkpoint = pickle.load(f)
+        curr_generation = checkpoint['current_generation']
+
+    for candidate in curr_generation.solution_list:
+        print(f"{candidate.config_path} has fitness -> {candidate.fitness}")
+
+    """
+    print(f"The supposed configs")
+    for candidate in curr_generation.solution_list:
+        print(f"{candidate.config_path}")
+
     meta_genetic_algorithm = MetaGeneticAlgorithm(population_size, cx_rate, cx_points,
-                                                  mutate_rate_discrete, mutate_rate_continuous)
-    best_config = meta_genetic_algorithm.optimize_network_hyperparameters(100, 30)
-    print(f"best_config = {best_config}")
+                                                  mutate_rate_discrete, mutate_rate_continuous, curr_generation)
+    meta_genetic_algorithm.optimize_network_hyperparameters(30, 20)
+    """

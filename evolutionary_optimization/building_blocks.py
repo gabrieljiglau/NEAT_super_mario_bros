@@ -3,16 +3,19 @@ from typing import List
 from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
 
-def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuous, precision):
-    parameters = []
+
+def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuous, precision,
+                                     local_search=False, neighbour_bitstring=None):
 
     """
     add each hyperparameter that will be used in NEAT to the final parameters list
     :return: the list containing all the encoded hyperparameters
     """
 
-    pop_size_values = [i for i in range(10, 20)]
-    pop_size = DiscreteParameter(10, 20, mutate_rate_discrete, pop_size_values, precision)
+    parameters: List[DiscreteParameter | ContinuousParameter] = []
+
+    pop_size_values = [i for i in range(10, 80)]
+    pop_size = DiscreteParameter(10, 80, mutate_rate_discrete, pop_size_values, precision)
     parameters.append(pop_size)
 
     boolean_values = [False, True]
@@ -95,10 +98,10 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
     response_init_stddev = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
     parameters.append(response_init_stddev)
 
-    response_max_value = ContinuousParameter(0, 30, mutate_rate_continuous, precision)
+    response_max_value = ContinuousParameter(0, 10, mutate_rate_continuous, precision)
     parameters.append(response_max_value)
 
-    response_min_value = ContinuousParameter(-30, 0, mutate_rate_continuous, precision)
+    response_min_value = ContinuousParameter(-10, 0, mutate_rate_continuous, precision)
     parameters.append(response_min_value)
 
     response_mutate_power = ContinuousParameter(0, 3, mutate_rate_continuous, precision)
@@ -131,10 +134,10 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
     weight_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_replace_rate)
 
-    compatibility_threshold = DiscreteParameter(10, 20, mutate_rate_discrete, [i for i in range(10, 20)], precision)
+    compatibility_threshold = DiscreteParameter(3, 12, mutate_rate_discrete, [i for i in range(3, 12)], precision)
     parameters.append(compatibility_threshold)
 
-    max_stagnation = DiscreteParameter(1, 15, mutate_rate_discrete, [i for i in range(1, 15)], precision)
+    max_stagnation = DiscreteParameter(1, 10, mutate_rate_discrete, [i for i in range(1, 10)], precision)
     parameters.append(max_stagnation)
 
     species_elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
@@ -147,8 +150,12 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
     parameters.append(survival_threshold)
 
     final_bitstring = []
-    for param in parameters:
-        bitstring = param.initialize_randomly()
+    for index, param in enumerate(parameters):
+
+        if local_search:
+            bitstring = param.initialize(neighbour_bitstring[index])
+        else:
+            bitstring = param.initialize_randomly()
 
         if not bitstring:
             raise ValueError(f"Generated an empty bitstring for parameter: {param}")
@@ -161,6 +168,8 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
 """
 decoded parameters should be returned after the initialization of the encoded parameters has taken place
 """
+
+
 def decode_parameters(encoded_parameters):
     decoded_parameters = []
     for param in encoded_parameters:
@@ -189,6 +198,11 @@ class ContinuousParameter:
         self.bit_length = len(self.bitstring)
         return self.bitstring
 
+    def initialize(self, bitstring):
+        self.bitstring = bitstring
+        self.bit_length = len(self.bitstring)
+        return self.bitstring
+
     def decode_continuous(self):
         self.actual_value = decode_continuous(self.bitstring, self.lower_bound, self.upper_bound, self.precision)
         return self.actual_value
@@ -206,6 +220,9 @@ class DiscreteParameter(ContinuousParameter):
 
     def initialize_randomly(self):
         return super().initialize_randomly()
+
+    def initialize(self, bistring):
+        return super().initialize(bistring)
 
     def decode_continuous(self):
         raise AttributeError("decode_continuous is not available for DiscreteParameter")
@@ -255,7 +272,7 @@ class IndividualSolution:
     def __getitem__(self, index):
         return self.parameters[index]
 
-    def create_config(self):
+    def create_config(self, individual_id=None):
 
         template = import_template()
 
@@ -263,7 +280,11 @@ class IndividualSolution:
         parent_dir = os.path.dirname(current_dir)
         base_dir = os.path.join(parent_dir, 'configs')
         os.makedirs(base_dir, exist_ok=True)
-        file_name = f"config{self.individual_id}"
+
+        if individual_id is not None:
+            file_name = f"config{individual_id}"
+        else:
+            file_name = f"config{self.individual_id}"
         file_path = os.path.join(base_dir, file_name)
         self.config_path = file_path
 
@@ -287,10 +308,12 @@ class IndividualSolution:
             os.remove(self.config_path)
             self.config_path = None
 
-    def set_initial_solution(self, mutate_discrete: float, mutate_continuous: float, precision: int):
+    def set_initial_solution(self, mutate_discrete: float, mutate_continuous: float, precision: int,
+                             local_search=False, neighbour_bitstring=None):
 
         final_bitstring = []
-        self.parameters = define_and_initialize_parameters(mutate_discrete, mutate_continuous, precision)
+        self.parameters = define_and_initialize_parameters(mutate_discrete, mutate_continuous, precision,
+                                                           local_search, neighbour_bitstring)
 
         for param in self.parameters:
             bitstring = param.bitstring
