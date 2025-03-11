@@ -1,5 +1,6 @@
 import math
 import random
+import matplotlib.pyplot as plt
 
 base_template = """
 [NEAT]
@@ -99,17 +100,29 @@ class Randomizer:
     def next_double():
         return random.uniform(0.0, 1.0)
 
-def get_hamming_neighbours(current_solution, num_samples):
+def get_hamming_neighbours(current_solution):
 
     """
-    :param num_samples: the number of neighbours bitstring that will be found in the return List
     :param current_solution: the surrounding candidate we search around for an improvement
     :return: a big_bitstring (a list), where at each index contains a neighbour of distance 1 from the current bitstring
     """
 
-
-
     pass
+
+def plot_convergence(num_individuals, num_species):
+    plt.figure(figsize=(10, 6))
+
+    generations = range(len(num_individuals))
+
+    plt.plot(generations, num_individuals, marker='o', linestyle='-', label='Number of individuals in a generation')
+    plt.plot(generations, num_species, marker='s', linestyle='dashed', label='Number of species')
+
+    plt.xlabel('Generations')
+    plt.ylabel('Individuals')
+    plt.title('Number of individuals ans species per generations')
+    plt.legend()
+    plt.savefig('individuals_and_species_across_generations.png')
+    plt.close()
 
 
 def generate_bitstring(lower: float, upper: float, precision: int):
@@ -144,6 +157,21 @@ def decode_continuous(bitstring: str, lower: float, upper: float, precision: int
 
     decoded_value = lower + (value / max_value) * target
     return round(decoded_value, precision)
+
+def encode_continuous(input_num: float, lower: float, upper: float, precision: int):
+
+    if not (lower <= input_num <= upper):
+        raise ValueError(f"Input number {input_num} is out of bounds [{lower}, {upper}]")
+
+    bit_size = get_bit_num(lower, upper, precision)
+
+    # scale the input number to an integer range [0, max_value]
+    max_value = (1 << bit_size) - 1  # 2^bit_size - 1
+    scaled_value = round(((input_num - lower) / (upper - lower)) * max_value)
+
+    bitstring = format(scaled_value, f'0{bit_size}b')
+
+    return bitstring
 
 def decode_discrete(bitstring: str, lower: int, upper:int, possible_values: list):
 
@@ -271,6 +299,7 @@ def build_config(template, decoded_parameters, filename):
 
 if __name__ == '__main__':
 
+
     lower_bound = 0
     upper_bound = 6
     precision_p = 5
@@ -279,11 +308,25 @@ if __name__ == '__main__':
     decoded_bitstring = decode_continuous(generated_bitstring, lower_bound, upper_bound, precision_p)
     print(f"generated_bitstring = {generated_bitstring}")
     print(f"decoded_bitstring = {decoded_bitstring}")
-
+    print(f"encoded_bitstring = {encode_continuous(decoded_bitstring, lower_bound, upper_bound, precision_p)}")
     # mutated_bistring = add_possible_mutation(generated_bitstring, 0.15)
 
+    """
     values = ["ala", "bala", "portocala", "cine", "mi-a", "mancat", "banana"]
     original_num = decode_discrete(generated_bitstring, lower_bound, upper_bound, values)
     # mutated_num = decode_discrete(mutated_bistring, lower_bound, upper_bound, values)
 
     print(f"Generated bitstring: {generated_bitstring} of the value {original_num}")
+    """
+
+    """
+    fitness_list = [2502.849, 3869.256, 2482.458, 2561.222, 3701.758, 6606.893, 17866.112]
+    average_fitness = [791.359, 898.897, 818.48431, 832.592, 830.129, 822.492, 855.986]
+    generation_time = [45.219, 62.222, 128.921, 291.252, 483.491, 653.161, 41185.393]
+    plot_convergence(fitness_list, average_fitness, generation_time)
+    """
+    """
+    no_individuals = [79, 190, 396, 660, 897, 1392, 1948]
+    no_species = [47, 99, 165, 241, 348, 487, 646]
+    plot_convergence(no_individuals, no_species)
+    """

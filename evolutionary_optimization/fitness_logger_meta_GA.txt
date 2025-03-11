@@ -1,4 +1,9 @@
+
+FIRST TIME:
 best_evaluation 5633.4262999999955 in generation 2; mean fitness 3676.107246666666
 best_evaluation 7638.738099999982 in generation 3; mean fitness 3627.452469999997
 best_evaluation 7638.738099999982 in generation 4; mean fitness 3762.3943633333315
 best_evaluation 17556.483499999955 in generation 5; mean fitness 4280.465303333332 
+
+SECOND TIME:
+

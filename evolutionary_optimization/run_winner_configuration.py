@@ -8,13 +8,13 @@ import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, RIGHT_ONLY
 from nes_py.wrappers import JoypadSpace
 
+# .venv is the correct virtual environment
+
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 env = JoypadSpace(env, RIGHT_ONLY)
 
-def softmax(x, temp=1.0):
-    """computes softmax values for each output"""
+def softmax(x):
     x = np.array(x)
-    x = x / temp
     exp_x = np.exp(x - np.max(x))
     return exp_x / np.sum(exp_x)
 
@@ -24,24 +24,24 @@ def preprocess(ob, inx, iny):
     ob = np.reshape(ob, (inx, iny))
     return ob
 
-def run_neat(skip_frames=4):
-    with open("../models/final_winner.pkl", 'rb') as f:
+def run_neat(network_path, config_path, skip_frames=4):
+    with open(network_path, 'rb') as f:
         c = pickle.load(f)
 
     print('Loaded genome:')
     print(c)
 
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, '../tests/config')
+    config_path = os.path.join(local_dir, config_path)
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
 
     neural_network = neat.nn.FeedForwardNetwork.create(c, config)
 
-    inx, iny, inc = env.observation_space.shape
-    inx = int(inx / 8)
-    iny = int(iny / 8)
+    width, height, color = env.observation_space.shape
+    width = int(width / 8)
+    height = int(height / 8)
 
     observation = env.reset()
 
@@ -50,37 +50,24 @@ def run_neat(skip_frames=4):
     distance_travelled = 0
     total_reward = 0
     frame = 0
-    action_index = 0
 
     while not done:
         env.render()
 
         frame += 1
-        processed_ob = preprocess(observation, inx, iny)
-        print(f"processed observation = {processed_ob}")
-        image_array = processed_ob.flatten()
+        preprocessed_frame = preprocess(observation, width, height) / 255
 
-        """
-        nn_output = [max(0, min(1, x)) for x in nn_output]
-        binary_string = "".join(str(round(x)) for x in nn_output)
-        int_output = int(binary_string, 2)
-
-        num_actions = len(SIMPLE_MOVEMENT)
-        int_output = int_output % num_actions
-        """
-
-        if frame % skip_frames == 0:
-            network_output = neural_network.activate(image_array)
-            action_probs = softmax(network_output, 1)
-            action_index = np.random.choice(len(action_probs), p=action_probs)
-        # print(f"info = {info}")
+        image_array = preprocessed_frame.flatten()
 
         total_reward = 0
+        network_output = neural_network.activate(image_array)
+        action_probs = softmax(network_output)
+        action_index = np.random.choice(len(action_probs), p=action_probs)
+
         for _ in range(skip_frames):
             observation, reward, done, info = env.step(action_index)
             total_reward += reward
-
-            if done:  # episode might end early
+            if done:  # Episode might end early
                 break
 
         rew = reward if not isinstance(reward, np.generic) else reward.item()
@@ -94,7 +81,17 @@ def run_neat(skip_frames=4):
 
     print(f"distance_travelled = {distance_travelled}")
     print(f"total_reward = {total_reward}")
+    return distance_travelled
+
+# network_path = "../models/winner_config75_original.pkl"
+def run_neat_iteratively(network_path, config_path='config75', count=10):
+
+    total_distance = 0
+    for i in range(count):
+        total_distance += run_neat(network_path, config_path)
+    return total_distance / count
 
 
 if __name__ == '__main__':
-    run_neat()
+
+    run_neat("../models/winner_config75_original.pkl", 'config75')

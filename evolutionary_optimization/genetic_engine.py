@@ -92,7 +92,7 @@ class MetaGeneticAlgorithm:
             self.current_generation = current_generation
 
     def optimize_network_hyperparameters(self, max_generations=350, NEAT_generations=50,
-                                         file_tracker='fitness_logger.txt', checkpoint_file='checkpoint.pkl'):
+                                         file_tracker='fitness_logger_meta_GA.txt', checkpoint_file='checkpoint.pkl'):
 
         if os.path.exists(checkpoint_file):
             with open(checkpoint_file, 'rb') as f:
@@ -246,25 +246,28 @@ class MetaGeneticAlgorithm:
 
 
 if __name__ == '__main__':
+
     population_size = 30
     cx_rate = 0.8
     cx_points = 30
     mutate_rate_discrete = 0.004
     mutate_rate_continuous = 0.006
 
+    """
     with open('checkpoint.pkl', 'rb') as f:
         checkpoint = pickle.load(f)
         curr_generation = checkpoint['current_generation']
 
     for candidate in curr_generation.solution_list:
         print(f"{candidate.config_path} has fitness -> {candidate.fitness}")
+    """
 
     """
     print(f"The supposed configs")
     for candidate in curr_generation.solution_list:
         print(f"{candidate.config_path}")
+    """
 
     meta_genetic_algorithm = MetaGeneticAlgorithm(population_size, cx_rate, cx_points,
-                                                  mutate_rate_discrete, mutate_rate_continuous, curr_generation)
+                                                  mutate_rate_discrete, mutate_rate_continuous)
     meta_genetic_algorithm.optimize_network_hyperparameters(30, 20)
-    """

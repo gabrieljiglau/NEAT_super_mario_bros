@@ -104,3 +104,12 @@ Mean Distance: 417.90
 Mean Fitness: 917.00
 Mean Time: 235.97
 Best Individual - Distance: 2024, Time: 938, Fitness: 8496.932000000019
+
+## best config
+generation 0: Best fitness: 2502.84970, Population's average fitness: 791.35923 stdev: 498.67580 Generation time: 45.219 sec
+generation 1: Best fitness: 3869.25690 Population's average fitness: 898.89791 stdev: 529.51162 Generation time: 62.222 sec (54.184 average)
+generation 2: Best fitness: 2482.45850 Population's average fitness: 818.48431 stdev: 447.20655 Generation time: 128.921 sec (79.096 average)
+generation 3: Best fitness: 2561.22220 Population's average fitness: 832.59277 stdev: 445.49468 Generation time: 291.252 sec (132.135 average)
+generation 4: Best fitness: 3701.7583 Population's average fitness: 830.12923 stdev: 463.24365 sec Generation time: 483.491 sec (202.406 average)
+generation 5: Best fitness: 6606.89330 Population's average fitness: 822.49248 stdev: 468.25588 Generation time: 653.161 sec (277.532 average)
+generation 6: Best fitness: 17866.11290 Population's average fitness: 855.98667 stdev: 678.46476 sec  Generation time: 41185.393 sec (6121.512 average)

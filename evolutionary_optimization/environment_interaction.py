@@ -29,13 +29,12 @@ temperature = 1
 best_individual_fitness = float('-inf')
 best_individual_stats = {"distance": 0, "time": 0, "fitness": 0}
 
-def softmax(x, temp=1.0):
+def softmax(x):
     x = np.array(x)
-    x = x / temp
     exp_x = np.exp(x - np.max(x))
     return exp_x / np.sum(exp_x)
 
-def eval_genome(genome, config, skip_frames=4, STACK_SIZE=4):
+def eval_genome(genome, config, skip_frames=4):
     """Evaluates a single genome in NEAT with stacked frames."""
     global generation, best_individual_fitness, best_individual_stats, success
 
@@ -53,35 +52,20 @@ def eval_genome(genome, config, skip_frames=4, STACK_SIZE=4):
     xpos_max = 0
     distance_traveled = 0
     done = False
-    action_index = 0
 
-    # Fill the frame stack with the first preprocessed frame
-    preprocessed_frame = preprocess(observation, width, height) / 255.0  # Normalize
-    for _ in range(STACK_SIZE):
-        frame_stack.append(preprocessed_frame)
 
     while not done:
         frame += 1
 
-        # Preprocess the observation
-        preprocessed_frame = preprocess(observation, width, height) / 255.0  # Normalize
-        frame_stack.append(preprocessed_frame)  # Automatically removes the oldest frame when full
+        preprocessed_frame = preprocess(observation, width, height) / 255.0
 
-        # Ensure we only start once we have a full stack
-        if len(frame_stack) < STACK_SIZE:
-            continue
-
-        # Stack the frames along the depth dimension and flatten
-        stacked_observation = np.stack(frame_stack, axis=0)
-        image_array = stacked_observation.flatten()
-
-        # Perform action selection every `skip_frames` steps
-        if frame % skip_frames == 0:
-            network_output = neural_network.activate(image_array)
-            action_probs = softmax(network_output, temperature)
-            action_index = np.random.choice(len(action_probs), p=action_probs)
+        image_array = preprocessed_frame.flatten()
 
         total_reward = 0
+        network_output = neural_network.activate(image_array)
+        action_probs = softmax(network_output)
+        action_index = np.random.choice(len(action_probs), p=action_probs)
+
         for _ in range(skip_frames):
             observation, reward, done, info = env.step(action_index)
             total_reward += reward
@@ -123,11 +107,6 @@ def eval_genome(genome, config, skip_frames=4, STACK_SIZE=4):
         if (life < 2 and genome.fitness < 1500) or counter == 150:
             done = True
 
-    if generation % 5 == 0:
-        with open('training_statistics.txt', 'a') as file:
-            file.write(f"Now in generation {generation}; best_fintess {best_fitness}; best_distance {xpos_max}; "
-                       f"success = {success}")
-
     if genome.fitness > best_individual_fitness:
         best_individual_fitness = genome.fitness
         best_individual_stats = {
@@ -136,7 +115,7 @@ def eval_genome(genome, config, skip_frames=4, STACK_SIZE=4):
             "fitness": genome.fitness,
         }
 
-    return genome.fitness  # Only return fitness
+    return genome.fitness
 
 def preprocess(ob, inx, iny):
     ob = cv2.resize(ob, (inx, iny))
@@ -153,6 +132,8 @@ def print_info(gene_id: int, gene_fitness: float, info: dict) -> None:
 
 
 def run_mario(config_file, total_iterations, optimizing=False):
+
+    structure_too_complex = False
     num_cores = multiprocessing.cpu_count() - 1
 
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
@@ -185,19 +166,24 @@ def run_mario(config_file, total_iterations, optimizing=False):
             best_fitness_so_far = current_best.fitness
             best_genome_so_far = current_best
 
-        if elapsed_time > 300:
-            print("Timeout reached (300s)! Returning best fitness so far.")
+        if elapsed_time > 1000:
+
+            structure_too_complex = True
+            print("Timeout reached (800s)! Returning best fitness so far.")
+
+            with open('../models/winner_config75_original.pkl', 'wb') as output:
+                pickle.dump(best_genome_so_far, output, 1)
+                print(f"success rate = {float(success / total_iterations)}")
             break
 
     if not optimizing and best_genome_so_far:
-        with open('../models/winner_config75.pkl', 'wb') as output:
+        with open('../models/winner_config75_original.pkl', 'wb') as output:
             pickle.dump(best_genome_so_far, output, 1)
             print(f"success rate = {float(success/total_iterations)}")
 
-    return best_fitness_so_far if best_genome_so_far else None
+    return best_fitness_so_far if not structure_too_complex else best_genome_so_far / 5
 
 def save_winner(genome, generation_number):
-    """Save the winner genome to a file."""
     filename = f'../models/winner_gen_{generation_number}.pkl'
     with open(filename, 'wb') as output:
         pickle.dump(genome, output, 1)
@@ -207,7 +193,7 @@ def save_winner(genome, generation_number):
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config")
-    new_config = 'config'
+    new_config = 'config75'
 
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
@@ -215,5 +201,5 @@ if __name__ == "__main__":
     file_name = 'config75'
     file_path = os.path.join(base_dir, file_name)
 
-    MAX_GENERATION_COUNT = 100
-    print(f"max fitness = {run_mario(file_path, MAX_GENERATION_COUNT)}")
+    MAX_GENERATION_COUNT = 30
+    print(f"max fitness = {run_mario(new_config, MAX_GENERATION_COUNT)}")
