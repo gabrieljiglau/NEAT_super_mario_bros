@@ -2,6 +2,10 @@ import os.path
 from typing import List
 from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
     build_config, import_template, add_possible_mutation, get_bit_num
+import os.path
+from typing import List
+from evolutionary_optimization.utils import generate_bitstring, decode_discrete, decode_continuous, \
+    build_config, import_template, add_possible_mutation, get_bit_num
 
 
 def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuous, precision,
@@ -88,8 +92,8 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
     node_delete_prob = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(node_delete_prob)
 
-    hidden_size = [i for i in range(0, 10)]
-    num_hidden = DiscreteParameter(0, 10, mutate_rate_discrete, hidden_size, precision)
+    hidden_size = [i for i in range(0, 15)]
+    num_hidden = DiscreteParameter(0, 15, mutate_rate_discrete, hidden_size, precision)
     parameters.append(num_hidden)
 
     response_init_mean = ContinuousParameter(0, 5, mutate_rate_continuous, precision)
@@ -134,16 +138,16 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
     weight_replace_rate = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
     parameters.append(weight_replace_rate)
 
-    compatibility_threshold = DiscreteParameter(3, 12, mutate_rate_discrete, [i for i in range(3, 12)], precision)
+    compatibility_threshold = DiscreteParameter(3, 30, mutate_rate_discrete, [i for i in range(3, 30)], precision)
     parameters.append(compatibility_threshold)
 
     max_stagnation = DiscreteParameter(1, 10, mutate_rate_discrete, [i for i in range(1, 10)], precision)
     parameters.append(max_stagnation)
 
-    species_elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
+    species_elitism = DiscreteParameter(1, 10, mutate_rate_discrete, [i for i in range(1, 10)], precision)
     parameters.append(species_elitism)
 
-    elitism = DiscreteParameter(1, 5, mutate_rate_discrete, [i for i in range(1, 5)], precision)
+    elitism = DiscreteParameter(1, 10, mutate_rate_discrete, [i for i in range(1, 10)], precision)
     parameters.append(elitism)
 
     survival_threshold = ContinuousParameter(0, 1, mutate_rate_continuous, precision)
