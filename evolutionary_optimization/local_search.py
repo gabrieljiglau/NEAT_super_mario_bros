@@ -1,84 +1,98 @@
 import os
 import pickle
-
-from evolutionary_optimization.building_blocks import IndividualSolution
 from evolutionary_optimization.environment_interaction import run_mario
-from evolutionary_optimization.utils import get_hamming_neighbours
-
-def extract_weights_and_biases(solution_path):
-
-    weights_arr = []
-    biases_arr = []
-
-    with open(solution_path, 'rb') as winner:
-        genome = pickle.load(winner)
-
-    print(f"genome = \n{genome}\n")
-    weights = {key: conn.weight for key, conn in genome.connections.items()}
-
-    print(f"Weights: ")
-    for conn, weight in weights.items():
-        print(f"Connection {conn}: Weight {weight}")
-        weights_arr.append(weight)
-
-    print(f"Biases: ")
-    biases = {key: node.bias for key, node in genome.nodes.items()}
-    for node, bias in biases.items():
-        print(f"Node: {node} with bias {bias}")
-        biases_arr.append(biases)
-
-    return weights, biases, weights_arr, biases_arr
+from evolutionary_optimization.run_winner_configuration import run_neat_iteratively
+from evolutionary_optimization.utils import get_hamming_neighbours, modify_network, build_continuous_parameters, \
+    extract_weights_and_biases
 
 
 class HillClimbing:
 
-    def __init__(self, current_network_path, config_path='config75', precision=5):
+    def __init__(self, current_network_path, config_path, precision=5):
 
         if current_network_path is not None:
             self.network_path = current_network_path
         else:
-            print("You must specify the network path for which the search is performed")
+            print("You must specify the network path !!")
             return
 
         self.config_path = config_path
         self.precision = precision
 
-    # start: 861,6 distance avg over 10 runs
 
-    def improve_solution(self, current_best, num_runs=10):
+    def improve_solution(self, lower_bound=-3, upper_bound=3, num_runs=10,
+                         file_tracker='distance_logger_HC.txt', checkpoint_file='../checkpoints/hc_checkpoint.pkl'):
 
+        """
+        inițial dau ca parametru calea către rețea,
+        iar apoi, mă interesează doar weight-urile sub forma de bitstring, gasite in iteratia trecuta
+        """
 
-        num_until_improvements = []
-        best_distance = current_best
-        best_bitstring = None
-        local = True
+        if os.path.exists(checkpoint_file):
+            with open(checkpoint_file, 'rb') as f:
+                saved_data = pickle.load(f)
+                self.network_path = saved_data['network']
+                num_improvements = saved_data['num_improvements']
+                weights_and_biases = saved_data['weights_and_biases']
+                local = saved_data['local']
+                best_distance = saved_data['best_distance']
+                print('successfully opened checkpoint')
+        else:
+            num_improvements = 0
+            float_values = extract_weights_and_biases(self.network_path)  # the actual values
+            weights_and_biases = build_continuous_parameters(float_values, lower_bound, upper_bound)
+            best_distance = 861.6  # start: 861.6 avg distance in 10 runs
+            local = True
 
+        best_neighbour = None
+
+        # I want to run hill climbing improvement by improvement
         while local:
 
             found_improvement = False
-            new_candidate = IndividualSolution()
-            neighbours = get_hamming_neighbours(best_distance, self.num_samples)
+            neighbours = get_hamming_neighbours(weights_and_biases)
+            print(neighbours[1])
 
-            if new_fitness > best_distance.fitness:
-                best_distance = new_candidate
-                num_until_improvements.append(i + 1)
-                found_improvement = True
-                break  #
+            """
+            for neighbour_bitstring in neighbours:
+
+                new_network = modify_network(neighbour_bitstring, lower_bound, upper_bound)
+                new_avg_distance = run_neat_iteratively(new_network, num_runs)
+
+                if new_avg_distance > best_distance:
+                    best_neighbour = neighbour_bitstring
+                    found_improvement = True
+                    num_improvements += 1
 
             if not found_improvement:
                 local = False
 
-        print(f"best_config = {best_distance.config_path}")
-        return new_network
+            try:
+                with open(file_tracker, 'a') as f:
+                    f.write(f"in iteration {num_improvements + 1} the best distance is {best_distance}\n")
+            except IOError:
+                print(f"Error when trying to write to file {file_tracker}")
+
+            try:
+                with open(checkpoint_file, 'wb') as f:
+                    pickle.dump({'network': self.network_path,
+                                'num_improvements': num_improvements,
+                                 'weights_and_biases': best_neighbour,
+                                 'best_distance': best_distance,
+                                 'local': local}, f)
+            except IOError:
+                print(f"Error when writing to pickle {checkpoint_file}")
+
+            break
+        """
+        return self.network_path
 
 
 if __name__ == '__main__':
 
-    current_path = "../models/winner_config75_copy.pkl"
+    config_path = "../configs/config75"
+    network_path = "../models/winner_config75_original.pkl"
     current_path1 = "modified_network.pkl"
 
-    weights, biases, weights_list, biases_list = extract_weights_and_biases(current_path1)
-    hill_climbing = HillClimbing(current_path)
-    hill_climbing.improve_solution(current_best=861.6)
-
-
+    hill_climbing = HillClimbing(network_path, config_path, precision=5)
+    hill_climbing.improve_solution()

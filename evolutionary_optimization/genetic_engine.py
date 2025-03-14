@@ -92,7 +92,7 @@ class MetaGeneticAlgorithm:
             self.current_generation = current_generation
 
     def optimize_network_hyperparameters(self, max_generations=350, NEAT_generations=50,
-                                         file_tracker='fitness_logger_meta_GA.txt', checkpoint_file='checkpoint.pkl'):
+                                         file_tracker='../logging/fitness_logger_meta_GA.txt', checkpoint_file='checkpoint.pkl'):
 
         if os.path.exists(checkpoint_file):
             with open(checkpoint_file, 'rb') as f:
