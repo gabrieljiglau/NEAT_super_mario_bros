@@ -84,14 +84,14 @@ def run_neat(network_path, config_path, skip_frames=4):
     return distance_travelled
 
 # network_path = "../models/winner_config75_original.pkl"
-def run_neat_iteratively(network_path, config_path='config75', count=10):
+def run_neat_iteratively(network_path, config_path, sample_size=10):
 
     total_distance = 0
-    for i in range(count):
+    for i in range(sample_size):
         total_distance += run_neat(network_path, config_path)
-    return total_distance / count
+    return total_distance / sample_size
 
 
 if __name__ == '__main__':
 
-    run_neat("../models/winner_config75_original.pkl", 'config75')
+    run_neat("../models/winner_config75_original.pkl", '../configs/config75')

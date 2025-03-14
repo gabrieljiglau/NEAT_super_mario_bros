@@ -1,4 +1,5 @@
 import math
+import pickle
 import random
 import matplotlib.pyplot as plt
 
@@ -100,15 +101,6 @@ class Randomizer:
     def next_double():
         return random.uniform(0.0, 1.0)
 
-def get_hamming_neighbours(current_solution):
-
-    """
-    :param current_solution: the surrounding candidate we search around for an improvement
-    :return: a big_bitstring (a list), where at each index contains a neighbour of distance 1 from the current bitstring
-    """
-
-    pass
-
 def plot_convergence(num_individuals, num_species):
     plt.figure(figsize=(10, 6))
 
@@ -123,7 +115,6 @@ def plot_convergence(num_individuals, num_species):
     plt.legend()
     plt.savefig('individuals_and_species_across_generations.png')
     plt.close()
-
 
 def generate_bitstring(lower: float, upper: float, precision: int):
 
@@ -214,7 +205,7 @@ def add_possible_mutation(input_bistring: str, mutation_rate: float):
 
     return ''.join(new_bitstring)
 
-def get_bit_num(lower: float, upper: float, precision: int = 2):
+def get_bit_num(lower: float, upper: float, precision: int = 5):
     sub_intervals = (upper - lower) * math.pow(10, precision)
 
     log_n = math.log2(sub_intervals)
@@ -296,20 +287,166 @@ def build_config(template, decoded_parameters, filename):
 
     return formatted_config
 
+def build_continuous_parameters(input_values, lower_bound, upper_bound):
+
+    parameters = []
+    for i in range(len(input_values)):
+
+        encoded_bitstring = encode_continuous(input_values[i], lower_bound, upper_bound, precision=5)
+        parameters.append(encoded_bitstring)
+
+    return ''.join(parameters)
+
+def get_hamming_neighbours(current_bitstring):
+
+    """
+    :param current_bitstring: the surrounding candidate we search around for an improvement
+    :return: a list of size 30, sampled from all neighbours, that differ from the current bitstring in only 1 bit
+    """
+
+    bit_list = [int(bit) for bit in current_bitstring]
+    neighbours = []
+    for i in range(len(current_bitstring)):
+        neighbour = bit_list.copy()
+        neighbour[i] = 1 - neighbour[i]
+        neighbours.append("".join(map(str,neighbour)))
+
+    # print(f"number of neighbours = {len(neighbours)}")
+    num_samples = min(30, len(neighbours))
+    return random.sample(neighbours, num_samples)
+
+def extract_weights_and_biases(solution_path):
+
+    weights_and_biases = []
+
+    with open(solution_path, 'rb') as winner:
+        genome = pickle.load(winner)
+
+    print(f"genome = \n{genome}\n")
+    full_weights = {key: conn.weight for key, conn in genome.connections.items()}
+
+    """
+    !!! HERE I WANT THE WEIGHTS AND BIASES TO BE EXTRACTED IN THE EXACT SAME ORDER THAY ARE STORED IN PICKLE !!
+    """
+
+    print(f"Weights: ")
+    for conn, weight in full_weights.items():
+        print(f"Connection {conn}: Weight {weight}")
+        weights_and_biases.append(weight)
+
+    print(f"Biases: ")
+    full_biases = {key: node.bias for key, node in genome.nodes.items()}
+    for node, bias in full_biases.items():
+        print(f"Node: {node} with bias {bias}")
+        weights_and_biases.append(bias)
+
+
+    return weights_and_biases
+
+def modify_network(solution_path, encoded_weights_biases, lower_bound, upper_bound, evaluating_candidates=False):
+
+    with open(solution_path, 'rb') as winner:
+        genome = pickle.load(winner)
+
+    decoded_biases, decoded_weights = decode_weights_and_biases(encoded_weights_biases, lower_bound, upper_bound)
+
+    """
+    problema aici, fiindca nu pare ca lista de ponderi si bias-uri este in concordanță cu ceea ce se află în pickle
+    """
+
+    print(f"biases = {decoded_biases}")
+    print(f"weights = {decoded_weights}")
+
+    """
+    weights_and_biases = []
+    print(f"Weights: ")
+    for conn, weight in full_weights.items():
+        print(f"Connection {conn}: Weight {weight}")
+        weights_and_biases.append(weight)
+
+    print(f"Biases: ")
+    full_biases = {key: node.bias for key, node in genome.nodes.items()}
+    for node, bias in full_biases.items():
+        print(f"Node: {node} with bias {bias}")
+
+    """
+
+    for i, conn_key in enumerate(genome.connections.keys()):
+        genome.connections[conn_key].weight = decoded_weights[i]
+
+
+    for j, node_key in enumerate(genome.nodes.keys()):
+        genome.nodes[node_key].bias = decoded_biases[j]
+
+    if not evaluating_candidates:
+        with open(solution_path, 'wb') as winner:
+            pickle.dump(genome, winner)
+            print('Updated genome successfully')
+
+
+def decode_weights_and_biases(big_bitstring, lower_bound, upper_bound, num_biases=11, num_params=16):
+
+    step = get_bit_num(lower_bound, upper_bound, precision=5)
+    weights = []
+    biases = []
+
+    if len(big_bitstring) < num_params *  step:
+        raise ValueError("Bitstring length is too short")
+
+    for i in range(0, num_params * step, step):
+        current_bitstring = big_bitstring[i: i + step]
+        decoded_value = decode_continuous(current_bitstring, lower_bound, upper_bound, precision=5)
+        if len(biases) < num_biases :
+            biases.append(decoded_value)
+        else:
+            weights.append(decoded_value)
+
+    return biases, weights
+
 
 if __name__ == '__main__':
 
 
-    lower_bound = 0
-    upper_bound = 6
+    lower_bound = -3
+    upper_bound = 3
     precision_p = 5
 
+    decoded_params = extract_weights_and_biases("../models/winner_config75_copy.pkl")
+    bitstring = build_continuous_parameters(decoded_params, lower_bound, upper_bound)
+    modify_network("../models/winner_config75_copy.pkl", bitstring, lower_bound, upper_bound, False)
+
+
+
+    """
+    Connection(-52, 627): Weight - 0.96865
+    Connection(627, 422): Weight
+    0.01431
+    Connection(-204, 1): Weight
+    0.01431
+    Connection(-515, 627): Weight
+    0.01431
+    """
+
+    # print(get_bit_num(lower_bound, upper_bound, precision_p))
+    """
+    float_list = [-0.96865, 0.01431, 0.01431, 0.01431]
+    arr = []
+
+    for i in range(len(float_list)):
+        arr.append(encode_continuous(float_list[i],lower_bound, upper_bound, precision_p))
+
+    print(arr)
+    """
+    print(get_hamming_neighbours("01010110101010111100100000001001110001001000000010011100010010000000100111000100"))
+
+    """
     generated_bitstring = generate_bitstring(lower_bound, upper_bound, precision_p)
     decoded_bitstring = decode_continuous(generated_bitstring, lower_bound, upper_bound, precision_p)
     print(f"generated_bitstring = {generated_bitstring}")
     print(f"decoded_bitstring = {decoded_bitstring}")
     print(f"encoded_bitstring = {encode_continuous(decoded_bitstring, lower_bound, upper_bound, precision_p)}")
     # mutated_bistring = add_possible_mutation(generated_bitstring, 0.15)
+    """
 
     """
     values = ["ala", "bala", "portocala", "cine", "mi-a", "mancat", "banana"]

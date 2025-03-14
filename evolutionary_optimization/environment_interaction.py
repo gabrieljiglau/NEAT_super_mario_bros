@@ -198,7 +198,7 @@ if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
     base_dir = os.path.join(parent_dir, 'configs')
-    file_name = 'config75'
+    file_name = '../configs/config75'
     file_path = os.path.join(base_dir, file_name)
 
     MAX_GENERATION_COUNT = 30
