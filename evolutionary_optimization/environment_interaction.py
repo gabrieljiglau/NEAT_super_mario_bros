@@ -22,21 +22,69 @@ frame_stack = deque(maxlen=STACK_SIZE)
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 env = JoypadSpace(env, RIGHT_ONLY)
 
-success = 0
-generation = 0
 temperature = 1
+checkpoint='../checkpoints/NEAT_checkpoint.pkl'
+file_tracker='../logging/fitness_logger_NEAT.txt'
 
-best_individual_fitness = float('-inf')
-best_individual_stats = {"distance": 0, "time": 0, "fitness": 0}
+config_file = '../configs/config75'
+config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+                     neat.DefaultStagnation, config_file)
 
 def softmax(x):
     x = np.array(x)
     exp_x = np.exp(x - np.max(x))
     return exp_x / np.sum(exp_x)
 
+def preprocess(ob, inx, iny):
+    ob = cv2.resize(ob, (inx, iny))
+    ob = cv2.cvtColor(ob, cv2.COLOR_BGR2GRAY)
+    ob = np.reshape(ob, (inx, iny))
+    return ob
+
+def print_info(gene_id: int, gene_fitness: float, info: dict) -> None:
+    print('END OF GENOME: ', gene_id)
+    print('FITNESS: ', gene_fitness)
+
+    gene_fitness += info.get('score', 0)
+    print('FITNESS + SCORE: ', gene_fitness)
+
+
+exists = False
+if os.path.exists(checkpoint):
+    with open(checkpoint, 'rb') as f:
+        print('Successfully opened the checkpoint')
+        saved_data = pickle.load(f)
+        population = saved_data['population']
+        generation_number = saved_data['generation_number']
+        population = saved_data['population']
+        best_individual_fitness = saved_data['best_individual_fitness']
+        success_rate = saved_data['success_rate']
+        max_time = saved_data['max_time']
+        max_distance = saved_data['max_distance']
+        avg_time_per_run = saved_data['avg_time_per_run']
+        best_genome_so_far = saved_data.get('best_genome_so_far', None)
+
+        exists = True
+else:
+    generation_number = 0
+    best_individual_fitness = float('-inf')
+    success_rate = 0
+    avg_time_per_run = 0
+    max_time = 0
+    max_distance = 0
+    best_genome_so_far = None
+    population = neat.Population(config)
+
+total_distance = 0
+manager = multiprocessing.Manager()
+distances = manager.list()
 def eval_genome(genome, config, skip_frames=4):
-    """Evaluates a single genome in NEAT with stacked frames."""
-    global generation, best_individual_fitness, best_individual_stats, success
+    """Evaluates a single genome in NEAT with skipped frames."""
+
+    global success_rate
+    global max_distance
+    global total_distance  # Global variable for total distance across generations
+    global distances
 
     observation = env.reset()
     neural_network = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -50,15 +98,11 @@ def eval_genome(genome, config, skip_frames=4):
     frame = 0
     counter = 0
     xpos_max = 0
-    distance_traveled = 0
     done = False
-
 
     while not done:
         frame += 1
-
         preprocessed_frame = preprocess(observation, width, height) / 255.0
-
         image_array = preprocessed_frame.flatten()
 
         total_reward = 0
@@ -91,97 +135,116 @@ def eval_genome(genome, config, skip_frames=4):
             genome.fitness += 1
             xpos_max = current_x
 
+        # Track the maximum distance
+        if current_x > max_distance:
+            max_distance = current_x
+
+        # Accumulate distance for the average distance calculation
+        total_distance += current_x  # Add the current x_pos to total distance
+        distances.append(current_x)
+
         if genome.fitness > best_fitness:
             best_fitness = genome.fitness
             counter = 0
         else:
             counter += 1
 
-        distance_traveled = current_x
         if info.get('flag_get', False):  # Success if the flag is reached
             genome.fitness += 10000
+            success_rate += 1
+
+            with open(file_tracker, 'a') as f:
+                f.write(f"success +1\n")
+
             done = True
-            success += 1
 
         life = info.get('life', 0)
         if (life < 2 and genome.fitness < 1500) or counter == 150:
             done = True
 
-    if genome.fitness > best_individual_fitness:
-        best_individual_fitness = genome.fitness
-        best_individual_stats = {
-            "distance": distance_traveled,
-            "time": frame,
-            "fitness": genome.fitness,
-        }
-
     return genome.fitness
 
-def preprocess(ob, inx, iny):
-    ob = cv2.resize(ob, (inx, iny))
-    ob = cv2.cvtColor(ob, cv2.COLOR_BGR2GRAY)
-    ob = np.reshape(ob, (inx, iny))
-    return ob
 
-def print_info(gene_id: int, gene_fitness: float, info: dict) -> None:
-    print('END OF GENOME: ', gene_id)
-    print('FITNESS: ', gene_fitness)
-
-    gene_fitness += info.get('score', 0)
-    print('FITNESS + SCORE: ', gene_fitness)
-
-
-def run_mario(config_file, total_iterations, optimizing=False):
-
-    structure_too_complex = False
+def run_mario(total_iterations, bulk_iterations=25, optimizing=False):
+    global best_individual_fitness, generation_number, best_genome_so_far, distances
     num_cores = multiprocessing.cpu_count() - 1
 
-    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
-                         neat.DefaultStagnation, config_file)
-    population = neat.Population(config)
+    if not exists:
+        max_distance = 0  # Initialize max distance
 
     if not optimizing:
         population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
-    global generation
-
-    # parallel evaluation is already implemented in NEAT via ParallelEvaluator
     parallel_evaluator = neat.ParallelEvaluator(num_cores, eval_genome)
 
-    best_fitness_so_far = None
-    best_genome_so_far = None
-
-    for gen in range(total_iterations):
+    while generation_number < total_iterations:
         start_time = time.time()
 
-        population.run(parallel_evaluator.evaluate, 1)  # run for one generation at a time
-
-        elapsed_time = time.time() - start_time
+        population.run(parallel_evaluator.evaluate, bulk_iterations)  # Run for one generation at a time
+        elapsed_time = time.time() - start_time  # Time for one generation
 
         current_best = stats.best_genomes(1)[0]
 
-        if best_fitness_so_far is None or current_best.fitness > best_fitness_so_far:
-            best_fitness_so_far = current_best.fitness
+        if best_individual_fitness is None or current_best.fitness > best_individual_fitness:
+            best_individual_fitness = current_best.fitness
             best_genome_so_far = current_best
 
-        if elapsed_time > 1000:
+        avg_time_per_run = elapsed_time / len(population.population)
+        max_distance = np.max(distances)
+        avg_distance = np.percentile(distances, 50)
+        distance_q3 = np.percentile(distances, 75)
 
-            structure_too_complex = True
-            print("Timeout reached (800s)! Returning best fitness so far.")
 
-            with open('../models/winner_config75_original.pkl', 'wb') as output:
-                pickle.dump(best_genome_so_far, output, 1)
-                print(f"success rate = {float(success / total_iterations)}")
-            break
+        # Calculate max distance and average distance for the current generation
+        fitness_values = [genome.fitness for genome in stats.most_fit_genomes]
+        if fitness_values:
+            q2 = np.percentile(fitness_values, 50)  # 50th percentile (median)
+            q3 = np.percentile(fitness_values, 75)  # 75th percentile
+        else:
+            q2 = 0
+            q3 = 0
+
+        generation_number += bulk_iterations
+
+        try:
+            with open(file_tracker, 'a') as f:
+                f.write(f"Generation {generation_number}:\n")
+                f.write(f"  Best Fitness: {best_individual_fitness}\n")
+                f.write(f"  Mean Fitness: {stats.get_fitness_mean()}\n")
+                f.write(f"  50th Percentile (Median): {q2}\n")
+                f.write(f"  75th Percentile: {q3}\n")
+                f.write(f"  Time for Best Individual: {elapsed_time:.2f} sec\n")
+                f.write(f"  Average Time per Population Run: {avg_time_per_run:.2f} sec\n")
+                f.write(f"  Max Distance: {max_distance}\n")
+                f.write(f"  75% of distances: {distance_q3} \n")
+                f.write(f"  Average Distance: {avg_distance:.2f}\n")
+        except IOError:
+            print(f"Error when trying to write to file {file_tracker}")
+
+        print(f"Saving generation number {generation_number} to {checkpoint}")
+        with open(checkpoint, 'wb') as f:
+            pickle.dump({
+                'population': population,
+                'generation_number': generation_number,
+                'best_individual_fitness': best_individual_fitness,
+                'best_genome_so_far': best_genome_so_far,
+                'mean_fitness': stats.get_fitness_mean(),
+                'max_time': max_time,
+                'avg_time_per_run': avg_time_per_run,
+                'success_rate': success_rate,
+                'max_distance': max_distance
+            }, f)
+
+        del distances[:]
 
     if not optimizing and best_genome_so_far:
         with open('../models/winner_config75_original.pkl', 'wb') as output:
             pickle.dump(best_genome_so_far, output, 1)
-            print(f"success rate = {float(success/total_iterations)}")
 
-    return best_fitness_so_far if not structure_too_complex else best_genome_so_far / 5
+    return best_individual_fitness
+
 
 def save_winner(genome, generation_number):
     filename = f'../models/winner_gen_{generation_number}.pkl'
@@ -191,9 +254,6 @@ def save_winner(genome, generation_number):
 
 
 if __name__ == "__main__":
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config")
-    new_config = 'config75'
 
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
@@ -201,5 +261,9 @@ if __name__ == "__main__":
     file_name = '../configs/config75'
     file_path = os.path.join(base_dir, file_name)
 
-    MAX_GENERATION_COUNT = 30
-    print(f"max fitness = {run_mario(new_config, MAX_GENERATION_COUNT)}")
+    """
+    first 50 generations 19:20 -> 
+    """
+
+    MAX_GENERATION_COUNT = 500
+    print(f"max fitness = {run_mario(MAX_GENERATION_COUNT, 10)}")
