@@ -1,2 +1,4 @@
-starting distance: 861.6
-in iteration 1 the best distance is 1406.9
+starting distance: 892.8
+in iteration 1 the best distance is 995.8
+in iteration 2 the best distance is 1061.2
+in iteration 3 the best distance is 1213.7

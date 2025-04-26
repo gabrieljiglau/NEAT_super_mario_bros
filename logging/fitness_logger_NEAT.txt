@@ -1,0 +1,189 @@
+success +1
+success +1
+Generation 25:
+  Best Fitness: 18129.48459999999
+  Mean Fitness: 1094.8781500000023
+  75th Percentile Fitness: 4448.613900000012
+  Time for Best Individual: 1778.15 sec
+  Average Time per Population Run: 17.78 sec
+  Max Distance: 3161
+  75% of distances: 2771
+  Average (Median) Distance: 898.0
+success +1
+success +1
+Generation 50:
+  Best Fitness: 18950.3087
+  Mean Fitness: 799.5409570000014
+  75th Percentile Fitness: 4479.566925000003
+  Time for Best Individual: 1446.36 sec
+  Average Time per Population Run: 14.46 sec
+  Max Distance: 3161
+  75% of distances: 1796
+  Average (Median) Distance: 722.0
+success +1
+success +1
+Generation 75:
+  Best Fitness: 18950.3087
+  Mean Fitness: 782.1495425742586
+  75th Percentile Fitness: 4469.249250000006
+  Time for Best Individual: 1520.88 sec
+  Average Time per Population Run: 15.06 sec
+  Max Distance: 3161
+  75% of distances: 1795
+  Average (Median) Distance: 722.0
+success +1
+Generation 100:
+  Best Fitness: 18950.3087
+  Mean Fitness: 861.035837623764
+  75th Percentile Fitness: 4397.998875000005
+  Time for Best Individual: 1410.50 sec
+  Average Time per Population Run: 13.97 sec
+  Max Distance: 3161
+  75% of distances: 1698.0
+  Average (Median) Distance: 698.0
+Generation 125:
+  Best Fitness: 18950.3087
+  Mean Fitness: 721.9464960000021
+  75th Percentile Fitness: 4365.362999999998
+  Time for Best Individual: 1213.75 sec
+  Average Time per Population Run: 12.14 sec
+  Max Distance: 1435
+  75% of distances: 1205.5
+  Average (Median) Distance: 705.5
+Generation 150:
+  Best Fitness: 18950.3087
+  Mean Fitness: 698.7819410000012
+  75th Percentile Fitness: 4403.01955
+  Time for Best Individual: 1208.73 sec
+  Average Time per Population Run: 12.09 sec
+  Max Distance: 1681
+  75% of distances: 1022.0
+  Average (Median) Distance: 722.0
+success +1
+Generation 175:
+  Best Fitness: 18950.3087
+  Mean Fitness: 781.2318370000004
+  75th Percentile Fitness: 4373.2451
+  Time for Best Individual: 1260.16 sec
+  Average Time per Population Run: 12.60 sec
+  Max Distance: 3161
+  75% of distances: 2016
+  Average (Median) Distance: 722.0
+Generation 200:
+  Best Fitness: 18950.3087
+  Mean Fitness: 716.5114130000023
+  75th Percentile Fitness: 4306.112300000009
+  Time for Best Individual: 1354.81 sec
+  Average Time per Population Run: 13.55 sec
+  Max Distance: 1518
+  75% of distances: 1022.0
+  Average (Median) Distance: 738
+success +1
+Generation 225:
+  Best Fitness: 18950.3087
+  Mean Fitness: 732.0721300000015
+  75th Percentile Fitness: 4274.793100000012
+  Time for Best Individual: 1487.91 sec
+  Average Time per Population Run: 14.73 sec
+  Max Distance: 3161
+  75% of distances: 1152
+  Average (Median) Distance: 722.0
+Generation 250:
+  Best Fitness: 18950.3087
+  Mean Fitness: 706.0709544554464
+  75th Percentile Fitness: 4233.781825000012
+  Time for Best Individual: 1578.03 sec
+  Average Time per Population Run: 15.47 sec
+  Max Distance: 1435
+  75% of distances: 1008.5
+  Average (Median) Distance: 708.5
+Generation 275:
+  Best Fitness: 18950.3087
+  Mean Fitness: 724.3559039603973
+  75th Percentile Fitness: 4201.258150000001
+  Time for Best Individual: 1521.30 sec
+  Average Time per Population Run: 15.06 sec
+  Max Distance: 1138
+  75% of distances: 922.0
+  Average (Median) Distance: 722
+Generation 300:
+  Best Fitness: 18950.3087
+  Mean Fitness: 814.7628455445557
+  75th Percentile Fitness: 4181.214625000002
+  Time for Best Individual: 1481.24 sec
+  Average Time per Population Run: 14.67 sec
+  Max Distance: 1654
+  75% of distances: 1122.0
+  Average (Median) Distance: 722
+Generation 325:
+  Best Fitness: 18950.3087
+  Mean Fitness: 794.9984760000016
+  75th Percentile Fitness: 4143.6527000000015
+  Time for Best Individual: 1507.82 sec
+  Average Time per Population Run: 15.23 sec
+  Max Distance: 1523
+  75% of distances: 922.5
+  Average (Median) Distance: 722
+Generation 350:
+  Best Fitness: 18950.3087
+  Mean Fitness: 826.6955030000025
+  75th Percentile Fitness: 4101.48750000001
+  Time for Best Individual: 1446.78 sec
+  Average Time per Population Run: 14.47 sec
+  Max Distance: 1528
+  75% of distances: 880.25
+  Average (Median) Distance: 680.25
+Generation 375:
+  Best Fitness: 18950.3087
+  Mean Fitness: 737.205606000001
+  75th Percentile Fitness: 4045.38310000001
+  Time for Best Individual: 1428.08 sec
+  Average Time per Population Run: 14.14 sec
+  Max Distance: 1441
+  75% of distances: 1022.0
+  Average (Median) Distance: 722.0
+Generation 400:
+  Best Fitness: 18950.3087
+  Mean Fitness: 733.5934470588255
+  75th Percentile Fitness: 3905.3102000000017
+  Time for Best Individual: 1471.02 sec
+  Average Time per Population Run: 14.86 sec
+  Max Distance: 1521
+  75% of distances: 922.0
+  Average (Median) Distance: 696.00
+Generation 425:
+  Best Fitness: 18950.3087
+  Mean Fitness: 664.2589485148528
+  75th Percentile Fitness: 3797.7861000000116
+  Time for Best Individual: 1489.16 sec
+  Average Time per Population Run: 14.74 sec
+  Max Distance: 1435
+  75% of distances: 712.0
+  Average (Median) Distance: 643
+Generation 450:
+  Best Fitness: 18950.3087
+  Mean Fitness: 695.9262386138624
+  75th Percentile Fitness: 3749.381975
+  Time for Best Individual: 1476.25 sec
+  Average Time per Population Run: 14.62 sec
+  Max Distance: 1427
+  75% of distances: 822.0
+  Average (Median) Distance: 733
+Generation 475:
+  Best Fitness: 18950.3087
+  Mean Fitness: 820.4582790000013
+  75th Percentile Fitness: 3723.172849999999
+  Time for Best Individual: 1508.30 sec
+  Average Time per Population Run: 15.24 sec
+  Max Distance: 1426
+  75% of distances: 1022.0
+  Average (Median) Distance: 820
+Generation 500:
+  Best Fitness: 18950.3087
+  Mean Fitness: 713.8685000000013
+  75th Percentile Fitness: 3718.6397250000014
+  Time for Best Individual: 1543.71 sec
+  Average Time per Population Run: 15.59 sec
+  Max Distance: 1130
+  75% of distances: 822.0
+  Average (Median) Distance: 722.0
