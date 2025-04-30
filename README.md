@@ -32,3 +32,5 @@ Selecting by trial and error is a laborious task and is also susceptible to misc
 One approach for finding good parameters for an optimizer is to employ yet another overlaying optimizer, called 
 meta-optimizer. In this case, the optimizer is yet another Genetic Algorithm that uses mechanisms inspired by biological
 evolution (such as selection, mutation, recombination) to guide it in the large fitness landscape.
+
+![Mario Agent](runs/winner.gif)
