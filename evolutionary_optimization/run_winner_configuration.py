@@ -2,16 +2,35 @@ import os
 import pickle
 import cv2
 import neat
+import gym
+import subprocess
 import numpy as np
 import warnings; warnings.warn = lambda *args,**kwargs: None
 import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, RIGHT_ONLY
+from gym.wrappers import RecordVideo
 from nes_py.wrappers import JoypadSpace
 
 # .venv is the correct virtual environment
 
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 env = JoypadSpace(env, RIGHT_ONLY)
+video_dir = '../runs'
+os.makedirs(video_dir, exist_ok=True)
+video_path = os.path.join(video_dir, "winner_run")
+
+env = RecordVideo(env, video_path, episode_trigger=lambda ep: True)
+
+def caption_video(filename, caption):
+    output = filename.replace(".mp4", "_captioned.mp4")
+    cmd = [
+        "ffmpeg", "-i", filename,
+        "-vf", f"drawtext=text='{caption}':fontcolor=white:fontsize=24:x=10:y:10",
+        "-codec:a", "copy", output
+    ]
+
+    subprocess.run(cmd)
+
 
 def softmax(x):
     x = np.array(x)
@@ -24,12 +43,13 @@ def preprocess(ob, inx, iny):
     ob = np.reshape(ob, (inx, iny))
     return ob
 
-def run_neat(network_path, config_path, skip_frames=4):
+def run_neat(network_path, config_path, training=True, skip_frames=4):
     with open(network_path, 'rb') as f:
         c = pickle.load(f)
 
-    print('Loaded genome:')
-    print(c)
+    if not training:
+        print('Loaded genome:')
+        print(c)
 
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, config_path)
@@ -52,7 +72,9 @@ def run_neat(network_path, config_path, skip_frames=4):
     frame = 0
 
     while not done:
-        env.render()
+
+        if not training:
+            env.render()
 
         frame += 1
         preprocessed_frame = preprocess(observation, width, height) / 255
@@ -79,19 +101,29 @@ def run_neat(network_path, config_path, skip_frames=4):
         distance_travelled = x_pos
         total_reward += rew
 
-    print(f"distance_travelled = {distance_travelled}")
-    print(f"total_reward = {total_reward}")
+    env.close()
+
+    if not training:
+        print(f"distance_travelled = {distance_travelled}")
+        print(f"total_reward = {total_reward}")
+
+    if distance_travelled > 1000:
+        raw_video_path = os.path.join(video_dir, "good_distance", "episode1.mp4")
+        if os.path.exists(raw_video_path):
+            caption_video(raw_video_path, f"Distance: {int(distance_travelled)}")
+
     return distance_travelled
 
-# network_path = "../models/winner_config75_original.pkl"
-def run_neat_iteratively(network_path, config_path, sample_size=10):
+def run_neat_iteratively(network_path, config_path, training=True, sample_size=15):
 
     total_distance = 0
     for i in range(sample_size):
-        total_distance += run_neat(network_path, config_path)
+        total_distance += run_neat(network_path, config_path, training=training)
     return total_distance / sample_size
 
 
 if __name__ == '__main__':
-
-    run_neat("../models/winner_config75_original.pkl", '../configs/config75')
+    # reteaua gasita de meta algoritm: network_path = "../models/winner_config75_original.pkl"
+    # run_neat("../models/winner_config75_original.pkl", '../configs/config75', training=False)
+    medium_distance = run_neat_iteratively('../models/winner.pkl', '../configs/config75', training=False)
+    print(f"mean_distance = {medium_distance}")
