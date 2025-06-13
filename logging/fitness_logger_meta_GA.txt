@@ -5,5 +5,11 @@ best_evaluation 7638.738099999982 in generation 3; mean fitness 3627.45246999999
 best_evaluation 7638.738099999982 in generation 4; mean fitness 3762.3943633333315
 best_evaluation 17556.483499999955 in generation 5; mean fitness 4280.465303333332 
 
-SECOND TIME:
 
+SECOND TIME:
+best_evaluation 18687.615399999948 in generation 1; mean fitness 9832.58225666665; win percentage 0.23333333333333335
+best_evaluation 1775998.7049999977 in generation 2; mean fitness 801194.1539433326; win percentage 0.433333333333333
+best_evaluation 1782656.8431999998 in generation 3; mean fitness 1302168.0559946657; win percentage 0.477777777777777
+best_evaluation 1782656.8431999998 in generation 4; mean fitness 2028561.648358665; win percentage 0.6666666666666666
+best_evaluation 1782656.8431999998 in generation 5; mean fitness 2794360.477105331; win percentage 0.7111111111111
+242 de succese in meta algoritm in 5 de generatii

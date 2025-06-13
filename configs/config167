@@ -1,0 +1,81 @@
+
+[NEAT]
+fitness_criterion     = max
+fitness_threshold     = 100000
+pop_size              = 59
+reset_on_extinction   = True
+
+[DefaultGenome]
+# node activation options
+activation_default      = tanh
+activation_mutate_rate  = 0.52089
+activation_options      = log
+
+# node aggregation options
+aggregation_default     = min
+aggregation_mutate_rate = 0.48261
+aggregation_options     = sum
+
+# node bias options
+bias_init_mean          = 0.02794
+bias_init_stdev         = 0.59872
+bias_max_value          = 2.49328
+bias_min_value          = -2.3861
+bias_mutate_power       = 1.40484
+bias_mutate_rate        = 0.96296
+bias_replace_rate       = 0.15276
+
+# genome compatibility options
+compatibility_disjoint_coefficient = 2.23947
+compatibility_weight_coefficient   = 2.15906
+
+# connection add/remove rates
+conn_add_prob           = 0.88344
+conn_delete_prob        = 0.8
+
+# connection enable options
+enabled_default         = False
+enabled_mutate_rate     = 0.28938
+
+feed_forward            =  True
+initial_connection      = full_nodirect
+
+# node add/remove rates
+node_add_prob           = 0.48223
+node_delete_prob        = 0.85128
+
+# network parameters
+num_hidden              = 3
+num_inputs              = 960
+num_outputs             = 5
+
+# node response options
+response_init_mean      = 0.57179
+response_init_stdev     = 1.13144
+response_max_value      = 5.92252
+response_min_value      = -7.61903
+response_mutate_power   = 1.19905
+response_mutate_rate    = 0.63551
+response_replace_rate   = 0.49296
+
+# connection weight options
+weight_init_mean        = -0.8413
+weight_init_stdev       = 0.49852
+weight_max_value        = 0.81441
+weight_min_value        = -1.71911
+weight_mutate_power     = 0.35444
+weight_mutate_rate      = 0.99977
+weight_replace_rate     = 0.49727
+
+[DefaultSpeciesSet]
+compatibility_threshold = 26
+
+[DefaultStagnation]
+species_fitness_func =  max
+max_stagnation       =  4
+species_elitism      = 7
+
+[DefaultReproduction]
+elitism            = 7
+survival_threshold = 0.32203
+    

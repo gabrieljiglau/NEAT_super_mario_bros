@@ -18,8 +18,8 @@ def define_and_initialize_parameters(mutate_rate_discrete, mutate_rate_continuou
 
     parameters: List[DiscreteParameter | ContinuousParameter] = []
 
-    pop_size_values = [i for i in range(10, 80)]
-    pop_size = DiscreteParameter(10, 80, mutate_rate_discrete, pop_size_values, precision)
+    pop_size_values = [i for i in range(30, 60)]
+    pop_size = DiscreteParameter(30, 60, mutate_rate_discrete, pop_size_values, precision)
     parameters.append(pop_size)
 
     boolean_values = [False, True]

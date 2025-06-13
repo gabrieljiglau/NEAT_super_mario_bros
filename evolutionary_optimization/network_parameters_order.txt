@@ -1,0 +1,23 @@
+
+weights and in [-3, 3]
+
+Nodes: // 9 bias-uri
+	0 DefaultNodeGene(key=0, bias=-2.2243, response=2.8410050666421416, activation=log, aggregation=min)
+	1 DefaultNodeGene(key=1, bias=-1.603227390138039, response=1.486122248725402, activation=log, aggregation=sum)
+	2 DefaultNodeGene(key=2, bias=-2.0310939675821604, response=4.640426241134063, activation=log, aggregation=min)
+	3 DefaultNodeGene(key=3, bias=-1.6826945227449148, response=0.6384685492525843, activation=log, aggregation=sum)
+	4 DefaultNodeGene(key=4, bias=-1.2366282768736854, response=1.7835763475102029, activation=log, aggregation=sum)
+	419 DefaultNodeGene(key=419, bias=0.30274, response=3.430775598454404, activation=log, aggregation=min)
+	420 DefaultNodeGene(key=420, bias=-1.9924236658843497, response=2.4153914911799292, activation=log, aggregation=sum)
+	421 DefaultNodeGene(key=421, bias=0.30274, response=-0.9540101856439849, activation=log, aggregation=min)
+	422 DefaultNodeGene(key=422, bias=-1.562063092919646, response=0.8952521293144864, activation=log, aggregation=min)
+	423 DefaultNodeGene(key=423, bias=-0.7414512853383834, response=2.47742336313446, activation=log, aggregation=min)
+	627 DefaultNodeGene(key=627, bias=0.30274, response=4.37760708335459, activation=log, aggregation=min)
+
+
+Connections: // 5 weight-uri
+	DefaultConnectionGene(key=(-515, 627), weight=0.01431, enabled=False)
+	DefaultConnectionGene(key=(-204, 1), weight=0.01431, enabled=True)
+	DefaultConnectionGene(key=(-52, 422), weight=-0.96865, enabled=False)
+	DefaultConnectionGene(key=(-52, 627), weight=-0.96865, enabled=True)
+	DefaultConnectionGene(key=(627, 422), weight=0.01431, enabled=True)

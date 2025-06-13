@@ -7,7 +7,7 @@ import subprocess
 import numpy as np
 import warnings; warnings.warn = lambda *args,**kwargs: None
 import gym_super_mario_bros
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, RIGHT_ONLY
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, RIGHT_ONLY, COMPLEX_MOVEMENT
 from gym.wrappers import RecordVideo
 from nes_py.wrappers import JoypadSpace
 
@@ -123,7 +123,7 @@ def run_neat_iteratively(network_path, config_path, training=True, sample_size=1
 
 
 if __name__ == '__main__':
-    # reteaua gasita de meta algoritm: network_path = "../models/winner_config75_original.pkl"
+    # reteaua gasita de meta algoritm: network_path = "../models/winner_config134.pkl"
     # run_neat("../models/winner_config75_original.pkl", '../configs/config75', training=False)
-    medium_distance = run_neat_iteratively('../models/winner.pkl', '../configs/config75', training=False)
+    medium_distance = run_neat_iteratively('../models/winner.pkl', 'config134', training=False)
     print(f"mean_distance = {medium_distance}")

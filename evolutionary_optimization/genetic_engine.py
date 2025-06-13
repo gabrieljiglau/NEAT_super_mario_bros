@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Dict
 from evolutionary_optimization.building_blocks import Solution, IndividualSolution
-from evolutionary_optimization.environment_interaction import run_mario
+from evolutionary_optimization.environment_interaction import run_config
 from evolutionary_optimization.utils import Randomizer, get_bit_num
 
 
@@ -92,7 +92,8 @@ class MetaGeneticAlgorithm:
             self.current_generation = current_generation
 
     def optimize_network_hyperparameters(self, max_generations=350, NEAT_generations=50,
-                                         file_tracker='../logging/fitness_logger_meta_GA.txt', checkpoint_file='checkpoint.pkl'):
+                                         file_tracker='../logging/fitness_logger_meta_GA.txt',
+                                         checkpoint_file='../checkpoints/new_meta_checkpoint.pkl'):
 
         if os.path.exists(checkpoint_file):
             with open(checkpoint_file, 'rb') as f:
@@ -137,7 +138,7 @@ class MetaGeneticAlgorithm:
             for candidate in self.current_generation.solution_list:
                 print(f"now evaluating candidate: {index}")
                 config_path = candidate.config_path
-                fitness = run_mario(config_path, NEAT_generations, optimizing=True)
+                fitness = run_config(config_path, NEAT_generations)
                 if fitness > 10000:
                     winners += 1
                 total_fitness += fitness
@@ -162,6 +163,7 @@ class MetaGeneticAlgorithm:
             add the elites to the next generation and complete the rest of the population through selection
             """
 
+            print('Now applying genetic operators ...')
             while len(next_generation.solution_list) < self.pop_size:
                 selected_parents = self.select_candidates(sorted_population)
                 offsprings = crossover_parents(selected_parents[0], selected_parents[1],
@@ -188,6 +190,8 @@ class MetaGeneticAlgorithm:
             print(f"best_evaluation {best_score_all_time} in generation {generation_number}")
 
             generation_number += 1
+
+            print("Now saving the checkpoint ..")
 
             try:
                 with open(file_tracker, 'a') as f:
@@ -253,14 +257,12 @@ if __name__ == '__main__':
     mutate_rate_discrete = 0.004
     mutate_rate_continuous = 0.006
 
-    """
-    with open('checkpoint.pkl', 'rb') as f:
+    with open('../checkpoints/new_meta_checkpoint.pkl', 'rb') as f:
         checkpoint = pickle.load(f)
         curr_generation = checkpoint['current_generation']
 
     for candidate in curr_generation.solution_list:
         print(f"{candidate.config_path} has fitness -> {candidate.fitness}")
-    """
 
     """
     print(f"The supposed configs")
@@ -268,6 +270,12 @@ if __name__ == '__main__':
         print(f"{candidate.config_path}")
     """
 
-    meta_genetic_algorithm = MetaGeneticAlgorithm(population_size, cx_rate, cx_points,
-                                                  mutate_rate_discrete, mutate_rate_continuous)
-    meta_genetic_algorithm.optimize_network_hyperparameters(30, 20)
+    """
+    # in cazul in care ai mai rulat algoritmul
+    meta_ga = MetaGeneticAlgorithm(population_size, cx_rate, cx_points, 
+                                   mutate_rate_discrete, mutate_rate_continuous, curr_generation)
+    """
+    """    meta_ga = MetaGeneticAlgorithm(population_size, cx_rate, cx_points,
+                                   mutate_rate_discrete, mutate_rate_continuous)
+    """
+    # meta_ga.optimize_network_hyperparameters(30, 100)
